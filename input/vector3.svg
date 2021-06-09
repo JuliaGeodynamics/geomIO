@@ -15,7 +15,7 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   sodipodi:docname="vector.svg">
+   sodipodi:docname="vector3.svg">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -29,7 +29,7 @@
      inkscape:cx="-111.42857"
      inkscape:cy="560"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer5"
      showgrid="false"
      inkscape:window-width="1853"
      inkscape:window-height="1025"
@@ -44,7 +44,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -60,12 +60,27 @@
   </g>
   <g
      inkscape:groupmode="layer"
-     id="layer2"
+     id="layer4"
      inkscape:label="Layer 2">
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 44.60119,37.708334 157.99405,38.464286 144.3869,72.482143 75.595238,55.095237 46.113094,77.017855 Z"
-       id="path870"
+       d="m 37.041666,215.35714 c 0,0 142.874994,-20.41071 139.095234,-10.58333 -3.77976,9.82738 -24.94643,51.40476 -30.99404,50.64881 -6.04762,-0.75596 -43.08929,8.31547 -49.13691,0 -6.047618,-8.31548 -51.40476,-18.14286 -51.40476,-18.14286 z"
+       id="path914"
+       inkscape:connector-curvature="0" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="Layer 3">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 45.357142,25.613095 174.625,38.464286 152.70238,73.238094 114.90476,56.607143 c 0,0 -55.184522,13.607142 -58.208333,10.583333 C 53.672618,64.166667 45.357142,25.613095 45.357142,25.613095 Z"
+       id="path917"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 164.04166,105.74405 161.77381,159.41667 134.55952,106.5 182.94047,92.136903 Z"
+       id="path2739"
        inkscape:connector-curvature="0" />
   </g>
 </svg>
