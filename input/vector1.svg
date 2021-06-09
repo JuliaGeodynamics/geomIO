@@ -33,7 +33,7 @@
      showgrid="false"
      inkscape:window-width="1853"
      inkscape:window-height="1025"
-     inkscape:window-x="67"
+     inkscape:window-x="1987"
      inkscape:window-y="27"
      inkscape:window-maximized="1" />
   <metadata
@@ -64,8 +64,9 @@
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 5.2916666,166.22024 135.3154734,-6.80357 46.86905,-18.14286 21.16666,-5.29167"
+       d="m 5.2916666,166.22024 c 0,0 91.1434894,2.60144 135.3154734,-6.80357 16.38539,-3.48875 30.90044,-13.0777 46.86905,-18.14286 6.93232,-2.19889 21.16666,-5.29167 21.16666,-5.29167"
        id="path2745"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cssc" />
   </g>
 </svg>

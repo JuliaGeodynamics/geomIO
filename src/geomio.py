@@ -18,7 +18,7 @@ This is a temporary script file.
 
 
 from svgpathtools import svg2paths, real, imag, Line
-import pyclipper
+#import pyclipper
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -59,22 +59,48 @@ def getLayers(inFile):
             if "inkscape:label"  in text[p]:
                 layerSTR = text[p]
                 layerSTR = layerSTR.split("\"")
-                layerSTR = layerSTR[1]
+                layer = layerSTR[1]
             else:
                 layerSTR = "Layer" + str(p)
             if "id=\"path"  in text[p]:
                 pathSTR = text[p]
                 pathSTR = pathSTR.split("\"")
                 pathSTR = pathSTR[1]
-                Paths[pathSTR] = layerSTR
+                Paths[pathSTR] = layer
 
         Layers.append(Paths)
     return Layers
+
+def plot_line(inp, tol):
+    
+    line = np.array(inp)#*tol
+     
+    plt.plot(line[:, 0], line[:, 1], color='b')
+    
+    plt.scatter(line[:, 0], line[:, 1], s=5)
 
 
 def path2numpy(inFile):
     return
 
+def line2coor(path, tol = 1e-6):
+    coord = []
+     # read coordinates
+    for i in range(len(path)) :
+        
+        # if not isinstance(path[i], Line) :
+            
+        #     sys.exit("All paths should consist of lines segments only")
+        
+        line =  path[i]
+        p    =  line[0]
+        pe   =  line[1]
+        x    =  int(real(p))
+        y    = -int(imag(p))
+
+        coord.append([x, y])
+    return coord
+    
 inFile = "input/vector1.svg"
 paths, attributes = svg2paths(inFile)
 
@@ -85,15 +111,27 @@ Layers = getLayers(inFile)
 
 
 
+
 p = []
 line = paths[0]
-#print(paths)
-p = line[0]
-pol = p.poly()
-print(pol(1))
-pe = line[1]
+cor = line2coor(line)
+# seg =line._segments
+# #print(paths)
+# p = line[0]
+# pol = p.poly()
+# print(pol(1))
+# pe = line[1]
 
-arr = np.array([pe])
+#arr = np.array([pe])
+
+# plt.figure()
+array = np.array(cor)#*tol
+ 
+# plt.plot(line[:, 0], line[:, 1], color='b')
+
+# plt.scatter(line[:, 0], line[:, 1], s=5)
+
+# plt.show()
 
 
 
@@ -110,13 +148,6 @@ arr = np.array([pe])
 
 #------------------------------------------------------------------------------
 
-def plot_line(inp, tol):
-    
-    line = np.array(inp)*tol
-     
-    plt.plot(line[:, 0], line[:, 1], color='b')
-    
-    plt.scatter(line[:, 0], line[:, 1], s=5)
 
 #------------------------------------------------------------------------------
 
