@@ -18,11 +18,12 @@ This is a temporary script file.
 
 
 from svgpathtools import svg2paths, real, imag, Line
-#import pyclipper
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 import sys,os
+import ipdb
 os.chdir("..")
 
 
@@ -52,13 +53,15 @@ def getLayers(inFile):
             
     index.append(int(len(text)))
     
-    Layers = list()        
+    #Layers = list()
+    Paths = dict()        
     for i in range(len(index)-1):
-        Paths = dict()
+        
         for p in range(index[i],index[i+1]):
             if "inkscape:label"  in text[p]:
                 layerSTR = text[p]
                 layerSTR = layerSTR.split("\"")
+                print(layerSTR)
                 layer = layerSTR[1]
             else:
                 layerSTR = "Layer" + str(p)
@@ -68,19 +71,34 @@ def getLayers(inFile):
                 pathSTR = pathSTR[1]
                 Paths[pathSTR] = layer
 
-        Layers.append(Paths)
-    return Layers
+        #Layers.append(Paths)
+    return Paths
 
 def plot_line(inp, tol):
     
     line = np.array(inp)#*tol
      
-    plt.plot(line[:, 0], line[:, 1], color='b')
+    #plt.plot(line[:, 0], line[:, 1], color='b')
     
     plt.scatter(line[:, 0], line[:, 1], s=5)
 
 
 def path2numpy(inFile):
+    return
+
+def layerSeq(attributes, Layers):
+    
+    #Check for dicts
+    if not isinstance(attributes, dict):
+        sys.exit("Attributes must be dictonary")
+    if not isinstance(Layers, dict):
+        sys.exit("Layers must be dictonary")
+        
+        
+    for i in Layers.keys():
+        print(i)
+        if i in Layers[i]:
+            print("dasads")
     return
 
 def line2coor(path, tol = 1e-6):
@@ -96,14 +114,74 @@ def line2coor(path, tol = 1e-6):
         p    =  line[0]
         pe   =  line[1]
         x    =  int(real(p))
-        y    = -int(imag(p))
+        y    =  -int(imag(p))
 
         coord.append([x, y])
+    end = path.end
+    x    =  int(real(end))
+    y    =  -int(imag(end))
+    coord.append([x, y])
     return coord
     
+
+
+    
+    
+def controlPoints(line):
+    cPoints = list()
+    class Bezier(object):
+    
+        def __init__(self, start,c1,c2, end):
+            self.start = start
+            self.c1 = c1
+            self.c2 = c2
+            self.end = end
+            
+            return
+    
+    for i in range(len(line)):
+        
+        points = line._segments[i]
+        start = points.start#.copy()
+        c1 = points.control1#.copy()
+        c2 = points.control2#.copy()
+        end = points.end#.copy()
+        start = np.array([real(start),imag(start)])
+        c1 = np.array([real(c1),imag(c1)])
+        c2 = np.array([real(c2),imag(c2)])
+        end = np.array([real(end),imag(end)])
+        coors = Bezier(start,c1,c2, end)
+        #ipdb.set_trace()
+        cPoints.append(coors)
+        del coors
+    return cPoints
+
+
+def sortLayers(inFile):
+    paths, attributes = svg2paths(inFile)
+    layerInfo = getLayers(inFile)
+    Layers = list()
+    for i in layerInfo.keys():
+        ly = list()
+        for p in range(len(attributes)):
+            if attributes[p]['id'] in i: 
+                ly.append(paths[p])
+        Layers.append(ly)
+        
+    return Layers
+            
+                       
+    
+    
+        
+        
+        
+        
+        
+        
 inFile = "input/vector1.svg"
 paths, attributes = svg2paths(inFile)
-
+asd = sortLayers(inFile)
 
 f = open(inFile)
 text = f.readlines()
@@ -112,10 +190,7 @@ Layers = getLayers(inFile)
 
 
 
-p = []
-line = paths[0]
-cor = line2coor(line)
-# seg =line._segments
+
 # #print(paths)
 # p = line[0]
 # pol = p.poly()
@@ -124,15 +199,40 @@ cor = line2coor(line)
 
 #arr = np.array([pe])
 
-# plt.figure()
-array = np.array(cor)#*tol
- 
-# plt.plot(line[:, 0], line[:, 1], color='b')
+import matplotlib.path as mpath
+import matplotlib.patches as mpatches
 
-# plt.scatter(line[:, 0], line[:, 1], s=5)
+#plt.figure()
+for i in range(len(paths)):
+    
+    p = []
+    line = paths[i]
+    cor = line2coor(line)
+    # seg =line._segments
+    
+    array = np.array(cor)#*tol
+    #print(array)
+    
+     
+    #plt.plot(array[:, 0], array[:, 1], color='b')
+    
+    #plt.scatter(array[:, 0], array[:, 1], s=5)
+    
+    #plt.show()
 
+# bezier = line._segments
+# c = bezier[0].control1
+# cc = real(c)
+c = controlPoints(line)
+ccc = c[0]
+# Path = mpath.Path
+
+# fig, ax = plt.subplots()
+# pp1 = mpatches.PathPatch(
+#     Path([ccc[0].start, ccc[0].c1, ccc[0].c2, ccc[0].end],
+#          [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY]),
+#     fc="none", transform=ax.transData)
 # plt.show()
-
 
 
 #drawing = svg2rlg("input/vector.svg")
@@ -151,140 +251,140 @@ array = np.array(cor)#*tol
 
 #------------------------------------------------------------------------------
 
-def poly_plot(pdict, tol, isOpen = False) :
+# def poly_plot(pdict, tol, isOpen = False) :
 
-    for poly in pdict.values() :
+#     for poly in pdict.values() :
 
-        for i in range(len(poly)):
+#         for i in range(len(poly)):
         
-            coord = np.array(poly[i])*tol
+#             coord = np.array(poly[i])*tol
             
-            plt.scatter(coord[:, 0], coord[:, 1], s=5)
+#             plt.scatter(coord[:, 0], coord[:, 1], s=5)
         
-            if not isOpen:
+#             if not isOpen:
             
-                coord = np.vstack((coord, coord[0, :]))
+#                 coord = np.vstack((coord, coord[0, :]))
 
-            plt.plot(coord[:, 0], coord[:, 1], color='k')
+#             plt.plot(coord[:, 0], coord[:, 1], color='k')
 
-    plt.axis('equal')
+#     plt.axis('equal')
        
-#------------------------------------------------------------------------------
+# #------------------------------------------------------------------------------
 
-def poly_clip(clip, subj, solution) :
+# def poly_clip(clip, subj, solution) :
 
-    pc = pyclipper.Pyclipper()
+#     pc = pyclipper.Pyclipper()
     
-    pc.AddPath(clip, pyclipper.PT_CLIP,    True)
-    pc.AddPath(subj, pyclipper.PT_SUBJECT, True)
+#     pc.AddPath(clip, pyclipper.PT_CLIP,    True)
+#     pc.AddPath(subj, pyclipper.PT_SUBJECT, True)
 
-    res = pc.Execute2(pyclipper.CT_DIFFERENCE, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
+#     res = pc.Execute2(pyclipper.CT_DIFFERENCE, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
 
-    sol   = [i.Contour for i in res.Childs]
-    holes = [i.IsHole  for i in res.Childs]
+#     sol   = [i.Contour for i in res.Childs]
+#     holes = [i.IsHole  for i in res.Childs]
 
-    for i in range(len(sol)) :
+#     for i in range(len(sol)) :
         
-        if not holes[i] :
+#         if not holes[i] :
 
-            solution.append(sol[i])
+#             solution.append(sol[i])
 
-#------------------------------------------------------------------------------
+# #------------------------------------------------------------------------------
 
-def poly_get_box(inp) :
+# def poly_get_box(inp) :
     
-    poly = np.array(inp)
+#     poly = np.array(inp)
     
-    box = np.vstack((poly.min(axis=0), poly.max(axis=0)))
+#     box = np.vstack((poly.min(axis=0), poly.max(axis=0)))
     
-    return box
+#     return box
 
-#------------------------------------------------------------------------------
+# #------------------------------------------------------------------------------
 
-def points_in_box(points, box) :
+# def points_in_box(points, box) :
     
-    pt   = np.array(points)
-    xmin = np.array(pt[:, 0] > box[0, 0])
-    xmax = np.array(pt[:, 0] < box[1, 0])
-    ymin = np.array(pt[:, 1] > box[0, 1])
-    ymax = np.array(pt[:, 1] < box[1, 1])
+#     pt   = np.array(points)
+#     xmin = np.array(pt[:, 0] > box[0, 0])
+#     xmax = np.array(pt[:, 0] < box[1, 0])
+#     ymin = np.array(pt[:, 1] > box[0, 1])
+#     ymax = np.array(pt[:, 1] < box[1, 1])
 
-    I = xmin & xmax & ymin & ymax
+#     I = xmin & xmax & ymin & ymax
     
-    return pt[I, :]
+#     return pt[I, :]
 
-#------------------------------------------------------------------------------
+# #------------------------------------------------------------------------------
 
-def add_path(coord, ID, pdict) :
+# def add_path(coord, ID, pdict) :
 
-    if ID in pdict :
+#     if ID in pdict :
         
-        pdict[ID].append(coord)
+#         pdict[ID].append(coord)
         
-    else :
+#     else :
         
-        pdict[ID] = [coord]
+#         pdict[ID] = [coord]
 
-#------------------------------------------------------------------------------
+# #------------------------------------------------------------------------------
 
-def read_path(path, att, solids, holes, lines, tol) :
+# def read_path(path, att, solids, holes, lines, tol) :
     
-    # check attribute
-    A = att[0]
+#     # check attribute
+#     A = att[0]
           
-    if A not in ['S', 'H', 'L'] :
+#     if A not in ['S', 'H', 'L'] :
         
-        sys.exit("Attributes should define solids (S), holes (H) or lines (L) " + att)
+#         sys.exit("Attributes should define solids (S), holes (H) or lines (L) " + att)
 
-    if A in ['S', 'H'] and not path.isclosed() :
+#     if A in ['S', 'H'] and not path.isclosed() :
         
-        sys.exit("Solid and hole paths must be closed " + att)
+#         sys.exit("Solid and hole paths must be closed " + att)
 
-    if A in ['L'] and path.isclosed() :
+#     if A in ['L'] and path.isclosed() :
         
-        sys.exit("Line paths must be opened " + att)
+#         sys.exit("Line paths must be opened " + att)
 
-    coord = []
+#     coord = []
     
-    # read coordinates
-    for i in range(len(path)) :
+#     # read coordinates
+#     for i in range(len(path)) :
         
-        if not isinstance(path[i], Line) :
+#         if not isinstance(path[i], Line) :
             
-            sys.exit("All paths should consist of lines segments only")
+#             sys.exit("All paths should consist of lines segments only")
         
-        line =  path[i]
-        p    =  line[0]
-        pe   =  line[1]
-        x    =  int(real(p)/tol)
-        y    = -int(imag(p)/tol)
+#         line =  path[i]
+#         p    =  line[0]
+#         pe   =  line[1]
+#         x    =  int(real(p)/tol)
+#         y    = -int(imag(p)/tol)
 
-        coord.append([x, y])
+#         coord.append([x, y])
         
-    if A in ['L'] :
+#     if A in ['L'] :
         
-        x    =  int(real(pe)/tol)
-        y    = -int(imag(pe)/tol)
+#         x    =  int(real(pe)/tol)
+#         y    = -int(imag(pe)/tol)
         
-        coord.append([x, y])
+#         coord.append([x, y])
 
     
-    # get attribute identifier (key)
-    ID = int(att[1:])
+#     # get attribute identifier (key)
+#     ID = int(att[1:])
     
-    # store path
-    if A in ['S'] :
-        add_path(coord, ID, solids)
+#     # store path
+#     if A in ['S'] :
+#         add_path(coord, ID, solids)
     
-    if A in ['H'] :
-        add_path(coord, ID, holes)
+#     if A in ['H'] :
+#         add_path(coord, ID, holes)
     
-    if A in ['L'] :
-        add_path(coord, ID, lines)
+#     if A in ['L'] :
+#         add_path(coord, ID, lines)
       
 #------------------------------------------------------------------------------
 
-plt.close('all')
+#plt.close('all')
 
 #tol = 1e-6
 
