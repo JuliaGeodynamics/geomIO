@@ -47,32 +47,52 @@ def getLayers(inFile):
     f = open(inFile)
     text = f.readlines()
     index = []
+    numLayers = 0
     for i in range(len(text)):
         if "<g" in text[i]:
+            numLayers += 1
             index.append(i)
             
     index.append(int(len(text)))
     
     #Layers = list()
     Paths = dict()        
+    #print(index)
+    initNum = 0
+    compNum = 0
     for i in range(len(index)-1):
-        
+        #print(i)#
+        if i > 0:
+            if compNum != initNum:
+
+                sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
+        compNum = 0
         for p in range(index[i],index[i+1]):
             if "inkscape:label"  in text[p]:
                 layerSTR = text[p]
                 layerSTR = layerSTR.split("\"")
-                print(layerSTR)
+                #print(layerSTR)
                 layer = layerSTR[1]
             else:
                 layerSTR = "Layer" + str(p)
             if "id=\"path"  in text[p]:
-                pathSTR = text[p]
-                pathSTR = pathSTR.split("\"")
-                pathSTR = pathSTR[1]
-                Paths[pathSTR] = layer
+                if i == 0:
+                    initNum += 1
+                    compNum +=1
+                    pathSTR = text[p]
+                    pathSTR = pathSTR.split("\"")
+                    pathSTR = pathSTR[1]
+                    Paths[pathSTR] = layer
+                else:                    
+                    compNum +=1
+                    #print (compNum)
+                    pathSTR = text[p]
+                    pathSTR = pathSTR.split("\"")
+                    pathSTR = pathSTR[1]
+                    Paths[pathSTR] = layer
 
         #Layers.append(Paths)
-    return Paths
+    return Paths, numLayers
 
 def plot_line(inp, tol):
     
@@ -89,7 +109,7 @@ def path2numpy(inFile):
 def layerSeq(attributes, Layers):
     
     #Check for dicts
-    if not isinstance(attributes, dict):
+    if not isinstance(attributes, list):
         sys.exit("Attributes must be dictonary")
     if not isinstance(Layers, dict):
         sys.exit("Layers must be dictonary")
@@ -97,8 +117,8 @@ def layerSeq(attributes, Layers):
         
     for i in Layers.keys():
         print(i)
-        if i in Layers[i]:
-            print("dasads")
+        #if i in attributes.values():
+        #    print("dasads")
     return
 
 def line2coor(path, tol = 1e-6):
@@ -181,11 +201,12 @@ def sortLayers(inFile):
         
 inFile = "input/vector1.svg"
 paths, attributes = svg2paths(inFile)
-asd = sortLayers(inFile)
+#asd = sortLayers(inFile)
 
 f = open(inFile)
 text = f.readlines()
-Layers = getLayers(inFile)
+Layers, numLayers = getLayers(inFile)
+layerSeq(attributes, Layers)
 
 
 
