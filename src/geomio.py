@@ -175,10 +175,10 @@ def controlPoints(line):
         c1 = points.control1#.copy()
         c2 = points.control2#.copy()
         end = points.end#.copy()
-        start = np.array([real(start),imag(start)])
-        c1 = np.array([real(c1),imag(c1)])
-        c2 = np.array([real(c2),imag(c2)])
-        end = np.array([real(end),imag(end)])
+        start = np.array([real(start),-imag(start)])
+        c1 = np.array([real(c1),-imag(c1)])
+        c2 = np.array([real(c2),-imag(c2)])
+        end = np.array([real(end),-imag(end)])
         coors = Bezier(start,c1,c2, end)
         #ipdb.set_trace()
         cPoints.append(coors)
@@ -201,22 +201,19 @@ def sortLayers(inFile):
             if len(paths[c]._segments) != lenghts[r]:
                 sys.exit("wrong number of segments in Layer " + str(p)+ " considering your lowermost Layer as Layer 0")
                 #print(Layers[p])
-            c +=1
-            
-        
-        
-        
-    
-    # pathList = list()
-    # for i in layerInfo.keys():
-    #     ly = list()
-    #     for p in range(len(attributes)):
-    #         if attributes[p]['id'] in i: 
-    #             ly.append(paths[p])
-    #     pathList.append(ly)
-        
+            c +=1      
     return 
 
+def getCpoints(inFile):
+    paths, attributes = svg2paths(inFile)
+    cPoints = list()
+    for i in range(len(paths)):
+        line = paths[i]
+        points = controlPoints(line)
+        cPoints.append(points)
+    
+    return cPoints
+    
 
 
             
@@ -229,17 +226,109 @@ def sortLayers(inFile):
         
         
         
-inFile = "input/vector1.svg"
+inFile = "input/vectornew.svg"
 paths, attributes = svg2paths(inFile)
 sortLayers(inFile)
 
-f = open(inFile)
-text = f.readlines()
+#f = open(inFile)
+#text = f.readlines()
 Layers, numLayers = getLayers(inFile)
 checkPath(attributes, Layers)
 
-x = list(Layers.values())
-pathList =sortLayers(inFile)
+
+cPoints = getCpoints(inFile)
+
+
+
+
+
+import matplotlib.pyplot as plt
+from matplotlib.path import Path as Pt
+import matplotlib.patches as patches
+
+# verts = [
+#    (0., 0.),   # P0
+#    (0.2, 1.),  # P1
+#    (1., 0.8),  # P2
+#    (0.8, 0.),  # P3
+# ]
+
+# codes = [
+#     Pt.MOVETO,
+#     Pt.CURVE4,
+#     Pt.CURVE4,
+#     Pt.CURVE4,
+# ]
+
+# path = Pt(verts, codes)
+
+# fig, ax = plt.subplots()
+# patch = patches.PathPatch(path, facecolor='none', lw=2)
+# ax.add_patch(patch)
+
+# xs, ys = zip(*verts)
+# ax.plot(xs, ys, 'x--', lw=2, color='black', ms=10)
+
+# ax.text(-0.05, -0.05, 'P0')
+# ax.text(0.15, 1.05, 'P1')
+# ax.text(1.05, 0.85, 'P2')
+# ax.text(0.85, -0.05, 'P3')
+
+# ax.set_xlim(-0.1, 1.1)
+# ax.set_ylim(-0.1, 1.1)
+# plt.show()
+
+
+
+def plotBezier(cPoints):
+    
+    fig, ax = plt.subplots()
+    
+    for i in range(len(cPoints)):
+        verts =[(cPoints[i].start),
+                (cPoints[i].c1),
+                (cPoints[i].c2),
+                (cPoints[i].end)]
+        codes = [
+            Pt.MOVETO,
+            Pt.CURVE4,
+            Pt.CURVE4,
+            Pt.CURVE4,
+        ]
+        
+        path = Pt(verts, codes)
+        
+        
+        patch = patches.PathPatch(path, facecolor='none', lw=2)
+        ax.add_patch(patch)
+        
+        xs, ys = zip(*verts)
+        ax.plot(xs, ys, 'x--', lw=2, color='black', ms=10)
+    plt.show()
+    return
+
+for i in range(len(cPoints)):
+
+    plotBezier(cPoints[i])
+        
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -249,29 +338,29 @@ pathList =sortLayers(inFile)
 # pol = p.poly()
 # print(pol(1))
 # pe = line[1]
+#
+# import matplotlib.patches as mpatches
 
-#arr = np.array([pe])
-
-import matplotlib.path as mpath
-import matplotlib.patches as mpatches
-
-#plt.figure()
-for i in range(len(paths)):
+# #plt.figure()
+# for i in range(len(paths)):
     
-    p = []
-    line = paths[i]
-    cor = line2coor(line)
-    # seg =line._segments
+#     p = []
+#     line = paths[i]
+#     cor = line2coor(line)
+#     # seg =line._segments
     
-    array = np.array(cor)#*tol
-    #print(array)
+#     array = np.array(cor)#*tol
+#     #print(array)
     
      
-    #plt.plot(array[:, 0], array[:, 1], color='b')
+#     #plt.plot(array[:, 0], array[:, 1], color='b')
     
-    #plt.scatter(array[:, 0], array[:, 1], s=5)
+#     #plt.scatter(array[:, 0], array[:, 1], s=5)
     
-    #plt.show()
+#     #plt.show()
+#arr = np.array([pe])
+
+# 
 
 # # bezier = line._segments
 # # c = bezier[0].control1
