@@ -216,6 +216,8 @@ def getCpoints(inFile):
     
     return cPoints
     
+#write getcoords
+#wrpng starting points, need to loop over starting points
 
 
 def interp(cPoints, numPoints = 40):
@@ -259,7 +261,7 @@ def interp(cPoints, numPoints = 40):
         
         
         
-inFile = "input/vectornew.svg"
+inFile = "input/volume.svg"
 paths, attributes = svg2paths(inFile)
 sortLayers(inFile)
 
@@ -273,7 +275,7 @@ cPoints = getCpoints(inFile)
 
 bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2]])
 
-vol = interp(bezier)
+#vol = interp(bezier)
 
 
 
@@ -342,9 +344,9 @@ def plotBezier(cPoints):
     plt.show()
     return
 
-# for i in range(len(cPoints)):
+for i in range(len(cPoints)):
 
-#     plotBezier(cPoints[i])
+    plotBezier(cPoints[i])
         
 
         
