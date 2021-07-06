@@ -21,7 +21,7 @@ from svgpathtools import svg2paths, real, imag, Line
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import math
 import sys,os
 import ipdb
 import scipy as sc
@@ -263,13 +263,7 @@ def interp(cPoints, numPoints = 40):
 
     return Volume 
                        
-    
-    
-        
-        
-        
-        
-        
+
         
 inFile = "input/volume.svg"
 paths, attributes = svg2paths(inFile)
@@ -288,44 +282,34 @@ bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
 
 vol = interp(bezier)
 
+def deCastel(cPoints, t = 0.5, nSteps = 50):
+    Control = np.asarray([cPoints.start, cPoints.c1, cPoints.c2,cPoints.end])
+    #t= np.linspace(0,1,nSteps)
+    N,d = Control.shape
+    order = np.arange(N)
+    coeff = [math.factorial(N-1)
+             // (math.factorial(i)* math.factorial(N-1-i))
+             for i in range(N)]
+    #print(coeff)
+    Px = (Control.T *coeff).T
+    #print(Px)
+    #t = 0.5
+    B = (np.power.outer(1-t, order[::-1])
+         *np.power.outer(t,order)) @Px
+    print (B)
+    return B
 
+
+t = np.linspace(0,1,50)
+test = bezier[0]
+for i in range(50):
+    
+    B = deCastel(test,t[i])
+    #print(B)
 
 import matplotlib.pyplot as plt
 from matplotlib.path import Path as Pt
 import matplotlib.patches as patches
-
-# verts = [
-#    (0., 0.),   # P0
-#    (0.2, 1.),  # P1
-#    (1., 0.8),  # P2
-#    (0.8, 0.),  # P3
-# ]
-
-# codes = [
-#     Pt.MOVETO,
-#     Pt.CURVE4,
-#     Pt.CURVE4,
-#     Pt.CURVE4,
-# ]
-
-# path = Pt(verts, codes)
-
-# fig, ax = plt.subplots()
-# patch = patches.PathPatch(path, facecolor='none', lw=2)
-# ax.add_patch(patch)
-
-# xs, ys = zip(*verts)
-# ax.plot(xs, ys, 'x--', lw=2, color='black', ms=10)
-
-# ax.text(-0.05, -0.05, 'P0')
-# ax.text(0.15, 1.05, 'P1')
-# ax.text(1.05, 0.85, 'P2')
-# ax.text(0.85, -0.05, 'P3')
-
-# ax.set_xlim(-0.1, 1.1)
-# ax.set_ylim(-0.1, 1.1)
-# plt.show()
-
 
 
 def plotBezier(cPoints):
@@ -360,73 +344,4 @@ def plotBezier(cPoints):
 #     plotBezier(cPoints[i])
         
 
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# #print(paths)
-# p = line[0]
-# pol = p.poly()
-# print(pol(1))
-# pe = line[1]
-#
-# import matplotlib.patches as mpatches
-
-# #plt.figure()
-# for i in range(len(paths)):
     
-#     p = []
-#     line = paths[i]
-#     cor = line2coor(line)
-#     # seg =line._segments
-    
-#     array = np.array(cor)#*tol
-#     #print(array)
-    
-     
-#     #plt.plot(array[:, 0], array[:, 1], color='b')
-    
-#     #plt.scatter(array[:, 0], array[:, 1], s=5)
-    
-#     #plt.show()
-#arr = np.array([pe])
-
-# 
-
-# # bezier = line._segments
-# # c = bezier[0].control1
-# # cc = real(c)
-# c = controlPoints(line)
-# ccc = c[0]
-# Path = mpath.Path
-
-# fig, ax = plt.subplots()
-# pp1 = mpatches.PathPatch(
-#     Path([ccc[0].start, ccc[0].c1, ccc[0].c2, ccc[0].end],
-#          [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY]),
-#     fc="none", transform=ax.transData)
-# plt.show()
-
-
-#drawing = svg2rlg("input/vector.svg")
-
-
-
-
