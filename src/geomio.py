@@ -241,15 +241,25 @@ def interp(cPoints, numPoints = 40):
         c2[i,1] = cPoints[i].c2[1]
         end[i,0] = cPoints[i].end[0]
         end[i,1] = cPoints[i].end[1]
-    print(start)
-    sX = np.linspace(start[0,0], start[-1,0], 40)
-    print(sX)    
-    startI = interpolate.interp1d(start[0,:], start[1,:])
+    # print(start)
+    # print(start[:,0])
+    # print(start[1,:])
+    sX = np.linspace(start[0,0], start[-1,0], numPoints)
+    c1X = np.linspace(c1[0,0], c1[-1,0], numPoints)
+    c2X = np.linspace(c2[0,0], c2[-1,0], numPoints)
+    endX =  np.linspace(end[0,0], end[-1,0], numPoints)
+    #print(sX)    
+    startI = interpolate.interp1d(start[:,0], start[:,1])
     c1I = interpolate.interp1d(c1[:,0], c1[:,1])    
     c2I = interpolate.interp1d(c2[:,0], c2[:,1])
     endI = interpolate.interp1d(end[:,0], end[:,1])    
+    #print(c1)
+    #print(c1X)
     #print(startI(sX))
-    Volume = list([startI,c1I, c2I, endI])
+    #print(c1I(c1X))
+    #Volume = list([startI,c1I, c2I, endI])
+    Volume = list([np.array([sX,startI(sX)]),np.array([c1X,c1I(c1X)]), 
+                   np.array([c2X,c2I(c2X)]), np.array([endX,endI(endX)])])
 
     return Volume 
                        
@@ -273,9 +283,10 @@ checkPath(attributes, Layers)
 
 cPoints = getCpoints(inFile)
 
-bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2]])
+    
+bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
 
-#vol = interp(bezier)
+vol = interp(bezier)
 
 
 
@@ -344,9 +355,9 @@ def plotBezier(cPoints):
     plt.show()
     return
 
-for i in range(len(cPoints)):
+# for i in range(len(cPoints)):
 
-    plotBezier(cPoints[i])
+#     plotBezier(cPoints[i])
         
 
         
