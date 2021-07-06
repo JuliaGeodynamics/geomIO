@@ -21,6 +21,8 @@ from svgpathtools import svg2paths, real, imag, Line
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.path import Path as Pt
+import matplotlib.patches as patches
 import math
 import sys,os
 import ipdb
@@ -109,6 +111,19 @@ def plot_line(inp, tol):
 
 
 def checkPath(attributes, Layers):
+    """
+    
+
+    Parameters
+    ----------
+    Attributes and Layers from svgpathtools
+
+    Returns
+    -------
+    number of paths per layer and also checks wether 
+    the number of paths per layer is the same for all
+    layers
+    """
     
     #Check for dicts
     if not isinstance(attributes, list):
@@ -133,6 +148,19 @@ def checkPath(attributes, Layers):
     return numPaths
 
 def line2coor(path, tol = 1e-6):
+    """
+    DEPRACATED
+
+    Parameters
+    ----------
+    path: path(s) from svgpathtools
+    tol : tolerance, depraceteed.
+
+    Returns
+    -------
+    coord : coordinates of lines
+
+    """
     coord = []
      # read coordinates
     for i in range(len(path)) :
@@ -156,19 +184,35 @@ def line2coor(path, tol = 1e-6):
     
 
 
+class Bezier(object):
+    """
+    basic class for quadratic bezier curves
     
+    """
+
+    def __init__(self, start,c1,c2, end):
+        self.start = start
+        self.c1 = c1
+        self.c2 = c2
+        self.end = end
+        
+        return   
     
 def controlPoints(line):
-    cPoints = list()
-    class Bezier(object):
+    """
     
-        def __init__(self, start,c1,c2, end):
-            self.start = start
-            self.c1 = c1
-            self.c2 = c2
-            self.end = end
-            
-            return
+
+    Parameters
+    ----------
+    line : line of svgpathtools module
+
+    Returns
+    -------
+    cPoints: Class storing the controlpoints for quadratic bezier curves
+
+    """
+    cPoints = list()
+
     
     for i in range(len(line)):
         
@@ -189,6 +233,18 @@ def controlPoints(line):
 
 
 def sortLayers(inFile):
+    """
+    This function checks where are to little or to much segments 
+    if there are not equal number of paths(or segments) per layer    
+
+    Parameters
+    ----------
+    inFile : inputfile
+    Returns
+    -------
+    None.
+
+    """
     paths, attributes = svg2paths(inFile)
     Layers, numLayers = getLayers(inFile)
     numPaths = checkPath(attributes, Layers)
@@ -207,6 +263,19 @@ def sortLayers(inFile):
     return 
 
 def getCpoints(inFile):
+    """
+    This function generates a list of quadratic bezier Controlpoints
+    stored as bezier class for each layer and puts it toghter in a list
+
+    Parameters
+    ----------
+    inFile : inputfile
+
+    Returns
+    -------
+    cPoints : List of bezier segments per layer
+
+    """
     paths, attributes = svg2paths(inFile)
     cPoints = list()
     for i in range(len(paths)):
@@ -221,6 +290,21 @@ def getCpoints(inFile):
 
 
 def interp(cPoints, numPoints = 40):
+    """
+    This is the 1D interpolation in y direction
+
+    Parameters
+    ----------
+    cPoints : List of controlpoints for all zusammengehörigen 
+    bezierabschnitten
+    numPoints : Number of interpolationpoints
+         The default is 40.
+
+    Returns
+    -------
+    Volume : list of array, contains all the controlpoint tuples for start, c1,c2, end
+
+    """
 
     if not isinstance(cPoints, list):
         sys.exit("Input for interpolation must be list of controllpoint class")
@@ -282,38 +366,69 @@ bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
 
 vol = interp(bezier)
 
-def deCastel(cPoints, t = 0.5, nSteps = 50):
+def deCastel(cPoints, t = 0.5):
+    """
+    De Casteljau algorthm wich determines the absolute coordinates
+    on a bezier curve for a given segment
+
+    Parameters
+    ----------
+    cPoints : 4 controlpoints start, c1,c2,end.
+    t :  where the coordinate is computed.
+
+    Returns
+    -------
+    B : coordinates
+
+    """
     Control = np.asarray([cPoints.start, cPoints.c1, cPoints.c2,cPoints.end])
-    #t= np.linspace(0,1,nSteps)
     N,d = Control.shape
     order = np.arange(N)
     coeff = [math.factorial(N-1)
              // (math.factorial(i)* math.factorial(N-1-i))
              for i in range(N)]
-    #print(coeff)
+
     Px = (Control.T *coeff).T
-    #print(Px)
-    #t = 0.5
+
     B = (np.power.outer(1-t, order[::-1])
          *np.power.outer(t,order)) @Px
-    print (B)
+
     return B
 
 
-t = np.linspace(0,1,50)
-test = bezier[0]
-for i in range(50):
+
     
-    B = deCastel(test,t[i])
-    #print(B)
+def plotCas(curve, nPoints = 50):
+    """
+    Plots the Bezier segments with de Casteljaus algorithm
+
+    """
+    t = np.linspace(0,1,nPoints)
+
+    plt.figure()
+    for p in range(len(curve)):
+        c = curve[p]
+        for i in range(nPoints):
+        
+            B = deCastel(c,t[i])
+            plt.plot(B[0],B[1],'.')
+    plt.show()
+
+    return
+
+
+# curve = cPoints[0]
+# plotCas(curve,20)
+
+
 
 import matplotlib.pyplot as plt
-from matplotlib.path import Path as Pt
-import matplotlib.patches as patches
 
 
 def plotBezier(cPoints):
-    
+    """
+    pyplot equivalent for plotting
+    """
     fig, ax = plt.subplots()
     
     for i in range(len(cPoints)):
@@ -342,6 +457,68 @@ def plotBezier(cPoints):
 # for i in range(len(cPoints)):
 
 #     plotBezier(cPoints[i])
+def groupSegments(cPoints):
+    """
+    turns the layer list into a list of equal segments
+    """
+    segments= list()
+    for i in range(len(cPoints[0])):
+        segs = list()
+        for p in range(len(cPoints)):
+            c = cPoints[p][i]
+            segs.append(c)
+        segments.append(segs)
+    return segments
+
+
+def makeBezier(cPoints):
+    """
+    
+    """
+    if len(cPoints) != 4:
+        sys.exit("bezier Curves must be cubic")
+    bezierList = list()
+    for i in range(len(cPoints[0])):
+        start = cPoints[0][i]
+        c1 = cPoints[1][i]
+        c2 = cPoints[2][i]
+        end = cPoints[3][i]
+        Points = Bezier(start,c1,c2,end)
+        bezierList.append(Points)
+    return bezierList
+        
+        
+
+
+
+def Dim(cPoints, nLayers = 15):
+    segments = groupSegments(cPoints)
+    adLayers = list()
+    for i in range(len(segments)):
+        segs = list()
+        iPoints = interp(segments[i], nLayers)
+        print(len(iPoints))
+        newbez = makeBezier(iPoints)
+        
+
+        adLayers.append(newbez)
+    return  adLayers
+
+l = Dim(cPoints)
+segments = groupSegments(cPoints)
+    
+
+# def getCoors(cPoints, nPoints=30):
+#     for i in range(len(cPoints)):
+
+    
+    
+    
+
+
+
+
+        
         
 
     
