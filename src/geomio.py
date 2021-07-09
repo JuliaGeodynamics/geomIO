@@ -32,7 +32,7 @@ os.chdir("..")
 
 
 
-
+#redo for naming layers
 
 def getLayers(inFile):
     """
@@ -58,7 +58,7 @@ def getLayers(inFile):
             index.append(i)
             
     index.append(int(len(text)))
-    
+    #print(index )
     #Layers = list()
     Layers = dict()        
     #print(index)
@@ -68,7 +68,7 @@ def getLayers(inFile):
         #print(i)#
         if i > 0:
             if compNum != initNum:
-
+                #print(initNum,compNum)
                 sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
         compNum = 0
         for p in range(index[i],index[i+1]):
@@ -77,9 +77,11 @@ def getLayers(inFile):
                 layerSTR = layerSTR.split("\"")
                 #print(layerSTR)
                 layer = layerSTR[1]
+                #print(layer)
             else:
                 layerSTR = "Layer" + str(p)
             if "id=\"path"  in text[p]:
+                
                 if i == 0:
                     initNum += 1
                     compNum +=1
@@ -346,25 +348,44 @@ def interp(cPoints, numPoints = 40):
                    np.array([c2X,c2I(c2X)]), np.array([endX,endI(endX)])])
 
     return Volume 
+
+def getZvalues(inFile):
+    Layers, numLayers = getLayers(inFile)
+    names = list()
+    for z in Layers.values():
+        names.append(z)
+    zCoors = np.array([])
+    numbers = []    
+    for i in range(len(names)):
+        num = []
+        for r in names[i]:
+            if r.isdigit():
+                print(r)
+                num.append(int(r))
+        numbers.append(num) 
+
+    return numbers
+    
                        
 
         
 inFile = "input/volume.svg"
 paths, attributes = svg2paths(inFile)
-sortLayers(inFile)
+#sortLayers(inFile)
 
-#f = open(inFile)
-#text = f.readlines()
+f = open(inFile)#
+text = f.readlines()
 Layers, numLayers = getLayers(inFile)
-checkPath(attributes, Layers)
+#checkPath(attributes, Layers)
+names = getZvalues(inFile)
 
 
-cPoints = getCpoints(inFile)
+#cPoints = getCpoints(inFile)
 
     
-bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
+#bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
 
-vol = interp(bezier)
+#vol = interp(bezier)
 
 def deCastel(cPoints, t = 0.5):
     """
@@ -504,8 +525,8 @@ def Dim(cPoints, nLayers = 15):
         adLayers.append(newbez)
     return  adLayers
 
-l = Dim(cPoints)
-segments = groupSegments(cPoints)
+#l = Dim(cPoints)
+#segments = groupSegments(cPoints)
     
 
 # def getCoors(cPoints, nPoints=30):

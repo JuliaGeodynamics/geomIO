@@ -44,12 +44,12 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
-     inkscape:label="Layer 1"
+     inkscape:label="m2p4"
      inkscape:groupmode="layer"
      id="layer1"
      sodipodi:insensitive="true">
@@ -63,7 +63,7 @@
   <g
      inkscape:groupmode="layer"
      id="layer2"
-     inkscape:label="Layer 2"
+     inkscape:label="1p3"
      sodipodi:insensitive="true">
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -75,7 +75,7 @@
   <g
      inkscape:groupmode="layer"
      id="layer3"
-     inkscape:label="Layer 3"
+     inkscape:label="2p4"
      sodipodi:insensitive="true">
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -87,7 +87,7 @@
   <g
      inkscape:groupmode="layer"
      id="layer4"
-     inkscape:label="Layer 4">
+     inkscape:label="4p5">
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 21.549608,161.23955 C 22.659253,146.71685 43.051432,140.78077 56.323418,134.78122 73.772924,126.89326 93.518782,122.43549 112.64187,123.44194 128.20113,124.26083 145.46344,127.22894 157.24306,137.42706 165.16751,144.2876 175.45084,156.35731 170.8502,165.77527 165.13382,177.47726 142.62206,165.68469 132.67461,174.09075 121.05907,183.90643 124.81491,204.27666 115.66568,216.42408 106.53783,228.54312 94.677432,247.15069 79.757942,244.39432 66.584185,241.96047 61.01883,223.23747 58.969251,209.99848 57.323577,199.36846 72.377062,187.65437 66.528776,178.62646 60.187375,168.83734 42.403141,177.72926 32.132941,172.20086 27.660804,169.79353 21.162669,166.30369 21.549608,161.23955 Z"
