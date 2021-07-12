@@ -287,11 +287,26 @@ def getCpoints(inFile):
     
     return cPoints
     
+def makeBezier(cPoints):
+    """
+    
+    """
+    #if len(cPoints) != 4:
+     #   sys.exit("bezier Curves must be cubic")
+    #bezierList = list()
+    #for i in range(numInter):
+    start = cPoints[:,0]
+    c1 = cPoints[:,1]
+    c2 = cPoints[:,2]
+    end = cPoints[:,3]
+    Points = Bezier(start,c1,c2,end)
+        
+    return Points
 #write getcoords
 #wrpng starting points, need to loop over starting points
 
 
-def interp(cPoints, numPoints = 40):
+def interp(cPoints, zCoor, numPoints = 5):
     """
     This is the 1D interpolation in y direction
 
@@ -300,7 +315,7 @@ def interp(cPoints, numPoints = 40):
     cPoints : List of controlpoints for all zusammengehörigen 
     bezierabschnitten
     numPoints : Number of interpolationpoints
-         The default is 40.
+         The default is 5.
 
     Returns
     -------
@@ -310,13 +325,17 @@ def interp(cPoints, numPoints = 40):
 
     if not isinstance(cPoints, list):
         sys.exit("Input for interpolation must be list of controllpoint class")
-    startTest = np.zeros([len(cPoints),2])
-    startTest[:,0]= 1
+    
     start= np.zeros([len(cPoints),2])
     c1 = np.zeros([len(cPoints),2])
     c2 = np.zeros([len(cPoints),2])
     end = np.zeros([len(cPoints),2])
     
+    #shift the interpolation layers away from first layer
+    Inter = zCoor[-1]- zCoor[0]
+    Inter = Inter/numPoints
+    zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numPoints)
+    print(zValues) 
     
     for i in range(len(cPoints)):
         start[i,0] = cPoints[i].start[0]
@@ -327,27 +346,43 @@ def interp(cPoints, numPoints = 40):
         c2[i,1] = cPoints[i].c2[1]
         end[i,0] = cPoints[i].end[0]
         end[i,1] = cPoints[i].end[1]
-    # print(start)
-    # print(start[:,0])
-    # print(start[1,:])
-    sX = np.linspace(start[0,0], start[-1,0], numPoints)
-    c1X = np.linspace(c1[0,0], c1[-1,0], numPoints)
-    c2X = np.linspace(c2[0,0], c2[-1,0], numPoints)
-    endX =  np.linspace(end[0,0], end[-1,0], numPoints)
-    #print(sX)    
-    startI = interpolate.interp1d(start[:,0], start[:,1])
-    c1I = interpolate.interp1d(c1[:,0], c1[:,1])    
-    c2I = interpolate.interp1d(c2[:,0], c2[:,1])
-    endI = interpolate.interp1d(end[:,0], end[:,1])    
-    #print(c1)
-    #print(c1X)
-    #print(startI(sX))
-    #print(c1I(c1X))
-    #Volume = list([startI,c1I, c2I, endI])
-    Volume = list([np.array([sX,startI(sX)]),np.array([c1X,c1I(c1X)]), 
-                   np.array([c2X,c2I(c2X)]), np.array([endX,endI(endX)])])
 
-    return Volume 
+
+    # sX = np.linspace(start[0,0], start[-1,0], numPoints)
+    # c1X = np.linspace(c1[0,0], c1[-1,0], numPoints)
+    # c2X = np.linspace(c2[0,0], c2[-1,0], numPoints)
+    # endX =  np.linspace(end[0,0], end[-1,0], numPoints)
+
+    #interpolation for X
+    startX = interpolate.interp1d(zCoor, start[:,0])
+    c1X = interpolate.interp1d(zCoor, c1[:,0])    
+    c2X = interpolate.interp1d(zCoor, c2[:,0])
+    endX = interpolate.interp1d(zCoor, end[:,0])
+    
+        #interpolation for Y
+    startY = interpolate.interp1d(zCoor, start[:,1])
+    c1Y = interpolate.interp1d(zCoor, c1[:,1])    
+    c2Y = interpolate.interp1d(zCoor, c2[:,1])
+    endY = interpolate.interp1d(zCoor, end[:,1])
+    
+    print(c1X(zValues))
+    VolumeX = np.array([startX(zValues),c1X(zValues),
+                        c2X(zValues), endX(zValues) ])
+    VolumeY = np.array([startY(zValues),c1Y(zValues),
+                        c2Y(zValues), endY(zValues) ])
+    Segment =[]
+    for r in range(numPoints):
+        CP = np.array([])
+        CP = np.array([VolumeX[:,r],VolumeY[:,r]])
+        BEZ = makeBezier(CP)
+        Segment.append(BEZ)
+    #Volume = list([startI,c1I, c2I, endI])
+    #Volume = startX(zValues)
+    #print(Volume)
+    #Volume = list([np.array([sX,startI(sX)]),np.array([c1X,c1I(c1X)]), 
+                   #np.array([c2X,c2I(c2X)]), np.array([endX,endI(endX)])])
+
+    return Segment 
 
 def getZvalues(inFile):
     Layers, numLayers = getLayers(inFile)
@@ -401,9 +436,20 @@ zCoor = getZvalues(inFile)
 cPoints = getCpoints(inFile)
 
     
-#bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
+bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
 
-#vol = interp(bezier)
+SEG = interp(bezier, zCoor)
+
+def interWrap(inFile, numLayers = 5):
+    zCoor = getZvalues(inFile)
+
+
+    cPoints = getCpoints(inFile)
+    
+    for 
+    
+    
+    return
 
 def deCastel(cPoints, t = 0.5):
     """
@@ -456,8 +502,7 @@ def plotCas(curve, nPoints = 50):
     return
 
 
-#curve = cPoints[0]
-#plotCas(curve,20)
+
 
 
 
@@ -510,21 +555,7 @@ def groupSegments(cPoints):
     return segments
 
 
-def makeBezier(cPoints):
-    """
-    
-    """
-    if len(cPoints) != 4:
-        sys.exit("bezier Curves must be cubic")
-    bezierList = list()
-    for i in range(len(cPoints[0])):
-        start = cPoints[0][i]
-        c1 = cPoints[1][i]
-        c2 = cPoints[2][i]
-        end = cPoints[3][i]
-        Points = Bezier(start,c1,c2,end)
-        bezierList.append(Points)
-    return bezierList
+
         
         
 
