@@ -355,16 +355,34 @@ def getZvalues(inFile):
     for z in Layers.values():
         names.append(z)
     zCoors = np.array([])
-    numbers = []    
+    zCoor = np.array([], dtype = float)    
     for i in range(len(names)):
-        num = []
-        for r in names[i]:
-            if r.isdigit():
-                print(r)
-                num.append(int(r))
-        numbers.append(num) 
+        dig = []
+        if "p" in names[i]:
+            dig = names[i].split("p")
 
-    return numbers
+            if "m" in dig[0]:
+                dig[0] = dig[0].replace("m", "")
+                dig[0] = -int(dig[0])
+                #print(dig[0])
+                power = int(len(dig[1]))
+                num = int(dig[0])- (int(dig[1])*(10**-(int(len(dig[1])))))
+            else:
+                power = int(len(dig[1]))
+                num = int(dig[0])+ (int(dig[1])*(10**-(int(len(dig[1])))))
+                
+            #print(num)
+        else:
+            if "m" in names[i]:
+                num = names[i].replace("m","")
+                num = -int(num)
+            else:
+                num = int(names[i])
+                    
+
+        zCoor = np.append([num], zCoor) 
+
+    return zCoor
     
                        
 
@@ -377,10 +395,10 @@ f = open(inFile)#
 text = f.readlines()
 Layers, numLayers = getLayers(inFile)
 #checkPath(attributes, Layers)
-names = getZvalues(inFile)
+zCoor = getZvalues(inFile)
 
 
-#cPoints = getCpoints(inFile)
+cPoints = getCpoints(inFile)
 
     
 #bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
@@ -438,8 +456,8 @@ def plotCas(curve, nPoints = 50):
     return
 
 
-# curve = cPoints[0]
-# plotCas(curve,20)
+#curve = cPoints[0]
+#plotCas(curve,20)
 
 
 
