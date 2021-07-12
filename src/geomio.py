@@ -335,7 +335,7 @@ def interp(cPoints, zCoor, numPoints = 5):
     Inter = zCoor[-1]- zCoor[0]
     Inter = Inter/numPoints
     zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numPoints)
-    print(zValues) 
+    #print(zValues) 
     
     for i in range(len(cPoints)):
         start[i,0] = cPoints[i].start[0]
@@ -365,7 +365,7 @@ def interp(cPoints, zCoor, numPoints = 5):
     c2Y = interpolate.interp1d(zCoor, c2[:,1])
     endY = interpolate.interp1d(zCoor, end[:,1])
     
-    print(c1X(zValues))
+    #print(c1X(zValues))
     VolumeX = np.array([startX(zValues),c1X(zValues),
                         c2X(zValues), endX(zValues) ])
     VolumeY = np.array([startY(zValues),c1Y(zValues),
@@ -418,8 +418,55 @@ def getZvalues(inFile):
         zCoor = np.append([num], zCoor) 
 
     return zCoor
+
+def interZlayers(zCoor,numLayers):
+    Inter = zCoor[-1]- zCoor[0]
+    Inter = Inter/numLayers
+    zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numLayers)
+    return zValues
+
+#remove hardcoding
+def compEmpty(zCoor, numLayers):
+    zValues = interZlayers(zCoor, numLayers)
+    zCoor = np.append([zValues], zCoor)
+    vals = np.sort(zCoor)
+    #print(vals)
+    idx = np.zeros(len(vals))
+    for i in range(len(idx)):
+        if vals[i] in zValues:
+            idx[i] = 1
+            
+    return idx, vals
     
-                       
+def interWrap(inFile, numLayers):
+    zCoor = getZvalues(inFile)
+    idx, vals = compEmpty(zCoor, numLayers)
+
+    cPoints = getCpoints(inFile)
+    interLayers= list()
+
+    for p in range(len(cPoints[0])):
+        bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
+        seg = interp(bezier, zCoor, numLayers)
+        interLayers.append(seg)
+    
+    reshape = list()
+    for r in range(numLayers):
+        layer = list()
+        for p in range(len(cPoints[0])):    
+    
+            x = interLayers[p][r]
+            layer.append(x)
+        reshape.append(layer)
+    #learn enumerate
+    count = 0
+    for i in range(len(idx)):
+        if idx[i] == 1:
+            cPoints.insert(i, reshape[count])
+            count +=1
+            
+        
+    return cPoints, vals               
 
         
 inFile = "input/volume.svg"
@@ -430,26 +477,14 @@ f = open(inFile)#
 text = f.readlines()
 Layers, numLayers = getLayers(inFile)
 #checkPath(attributes, Layers)
-zCoor = getZvalues(inFile)
 
-
-cPoints = getCpoints(inFile)
 
     
-bezier = list([cPoints[0][0],cPoints[1][1],cPoints[2][2],cPoints[3][3]])
+#bezier = list([cPoints[0][0],cPoints[1][0],cPoints[2][0],cPoints[3][0]])
 
-SEG = interp(bezier, zCoor)
-
-def interWrap(inFile, numLayers = 5):
-    zCoor = getZvalues(inFile)
+#cPoints, vals = interWrap(inFile)
 
 
-    cPoints = getCpoints(inFile)
-    
-    for 
-    
-    
-    return
 
 def deCastel(cPoints, t = 0.5):
     """
@@ -479,9 +514,31 @@ def deCastel(cPoints, t = 0.5):
          *np.power.outer(t,order)) @Px
 
     return B
+#todo : correct z axis position in pointcloud
+def getCarthesian(inFile, numLayers, prec):
+    
+    cPoints, vals = interWrap(inFile, numLayers)
+    t = np.linspace(0,1, prec)
+    carthCoors = list()
+    LayerCoors = np.array([])
+    for r in range(len(vals)):
+        
+        for p in range(len(cPoints[0])):
+            seg = cPoints[r][p]
+            for s in range(prec):
+                B = deCastel(seg,t[s])
+                B = np.append([vals[r]],B,axis = -1) 
+                LayerCoors = np.append([B],LayerCoors)
+    newshape = int(len(LayerCoors)/3)
+    LayerCoors = np.reshape(LayerCoors,(newshape,3))
+    return LayerCoors
 
+lc = getCarthesian(inFile,5,25)
 
-
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+ax.scatter3D(lc[:,0], lc[:,1], lc[:,2])
+plt.show()
     
 def plotCas(curve, nPoints = 50):
     """
@@ -501,7 +558,7 @@ def plotCas(curve, nPoints = 50):
 
     return
 
-
+#plotCas(SEG)
 
 
 
