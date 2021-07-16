@@ -28,6 +28,8 @@ import sys,os
 import ipdb
 import scipy as sc
 from scipy import interpolate
+import open3d as o3d
+from pointcloud_delaunay import *
 os.chdir("..")
 
 
@@ -533,13 +535,39 @@ def getCarthesian(inFile, numLayers, prec):
     LayerCoors = np.reshape(LayerCoors,(newshape,3))
     return LayerCoors
 
-lc = getCarthesian(inFile,5,25)
+lc = getCarthesian(inFile,5,10)
 
-fig = plt.figure()
-ax = plt.axes(projection='3d')
-ax.scatter3D(lc[:,0], lc[:,1], lc[:,2])
-plt.show()
-    
+# fig = plt.figure()
+# ax = plt.axes(projection='3d')
+# ax.scatter3D(lc[:,0], lc[:,1], lc[:,2])
+# plt.show()
+dln = delny3D(lc)
+#dln.write()
+writer = vtk.vtkXMLUnstructuredGridWriter()
+writer.SetFileType("stl")
+writer.SetFileName('cosipy.stl')
+writer.SetInputData(dln)
+writer.Write()
+
+pcd = o3d.geometry.PointCloud()
+#pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
+#pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
+#pcd.normals = o3d.utility.Vector3dVector(lc[:,6:9])
+#o3d.visualization.draw_geometries([pcd])
+#hull = pcd.compute_convex_hull()
+#----------pivoting method
+# distances = pcd.compute_nearest_neighbor_distance()
+# avg_dist = np.mean(distances)
+# radius = 3 * avg_dist
+
+# #bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd,o3d.utility.DoubleVector([radius, radius * 2]))
+
+#-----------Poisson rec------------
+
+#poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
+
+
+
 def plotCas(curve, nPoints = 50):
     """
     Plots the Bezier segments with de Casteljaus algorithm
