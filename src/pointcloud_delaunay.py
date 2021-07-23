@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 import vtk
 from vtk.util import numpy_support as VN
 
+
+def findAlpha(PointCloudArray):
+    alpha = 0    
+    return alpha
+
+
 def delny3D(PointCloudArray):
     ## generate VTK pointcloud
     PC_points = vtk.vtkPoints()
@@ -27,6 +33,7 @@ def delny3D(PointCloudArray):
     delny = vtk.vtkDelaunay3D()
     delny.SetInputData(PC_polydata)
     delny.SetOffset(4.0)
+    delny.SetAlpha(20)
     delny.Update()
     
     delnyPolyData = delny.GetOutput()

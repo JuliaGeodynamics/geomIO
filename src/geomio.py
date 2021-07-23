@@ -28,7 +28,7 @@ import sys,os
 import ipdb
 import scipy as sc
 from scipy import interpolate
-import open3d as o3d
+
 from pointcloud_delaunay import *
 os.chdir("..")
 
@@ -66,6 +66,8 @@ def getLayers(inFile):
     #print(index)
     initNum = 0
     compNum = 0
+    
+    #-------------BUG!!!------------------
     for i in range(len(index)-1):
         #print(i)#
         if i > 0:
@@ -471,12 +473,12 @@ def interWrap(inFile, numLayers):
     return cPoints, vals               
 
         
-inFile = "input/volume.svg"
+inFile = "input/slab.svg"
 paths, attributes = svg2paths(inFile)
 #sortLayers(inFile)
 
-f = open(inFile)#
-text = f.readlines()
+# f = open(inFile)#
+# text = f.readlines()
 Layers, numLayers = getLayers(inFile)
 #checkPath(attributes, Layers)
 
@@ -520,6 +522,7 @@ def deCastel(cPoints, t = 0.5):
 def getCarthesian(inFile, numLayers, prec):
     
     cPoints, vals = interWrap(inFile, numLayers)
+    #print(vals)
     t = np.linspace(0,1, prec)
     carthCoors = list()
     LayerCoors = np.array([])
@@ -529,27 +532,29 @@ def getCarthesian(inFile, numLayers, prec):
             seg = cPoints[r][p]
             for s in range(prec):
                 B = deCastel(seg,t[s])
-                B = np.append([vals[r]],B,axis = -1) 
+                
+                B = np.append(B,[vals[r]]) 
+                
                 LayerCoors = np.append([B],LayerCoors)
     newshape = int(len(LayerCoors)/3)
     LayerCoors = np.reshape(LayerCoors,(newshape,3))
     return LayerCoors
 
-lc = getCarthesian(inFile,5,10)
+lc = getCarthesian(inFile,5,30)
 
 # fig = plt.figure()
 # ax = plt.axes(projection='3d')
 # ax.scatter3D(lc[:,0], lc[:,1], lc[:,2])
 # plt.show()
 dln = delny3D(lc)
-#dln.write()
+# #dln.write()
 writer = vtk.vtkXMLUnstructuredGridWriter()
-writer.SetFileType("stl")
-writer.SetFileName('cosipy.stl')
+#writer.SetFileType("stl")
+writer.SetFileName('slab2.vtu')
 writer.SetInputData(dln)
 writer.Write()
 
-pcd = o3d.geometry.PointCloud()
+#pcd = o3d.geometry.PointCloud()
 #pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
 #pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
 #pcd.normals = o3d.utility.Vector3dVector(lc[:,6:9])
@@ -566,7 +571,19 @@ pcd = o3d.geometry.PointCloud()
 
 #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
 
+def plotCloud3D(inFile):
+    
+    import open3d as o3d
+    Layers, numLayers = getLayers(inFile)
+    lc = getCarthesian(inFile,numLayers,10)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
+    #pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
+    #pcd.normals = o3d.utility.Vector3dVector(lc[:,6:9])
+    o3d.visualization.draw_geometries([pcd])
+    return
 
+#plotCloud3D(inFile)
 
 def plotCas(curve, nPoints = 50):
     """
