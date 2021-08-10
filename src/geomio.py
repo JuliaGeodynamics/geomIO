@@ -30,7 +30,7 @@ import scipy as sc
 from scipy import interpolate
 #import stlWrite
 from pointcloud_delaunay import *
-import meshwrite
+import meshwrite as wr
 os.chdir("..")
 
 
@@ -544,11 +544,13 @@ def getCarthesian(inFile, numLayers, prec):
 lc = getCarthesian(inFile,5,30)
 
 
+#from here it gets messy
 from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
-dln = Delaunay(lc)
+dlnSC = Delaunay(lc)
 hull = ConvexHull(lc)
 import numpy
 import struct
+import stl
 def stlWrite(ver):
     class Stl(object):
         dtype = numpy.dtype([
@@ -601,147 +603,49 @@ def sw(ver):
         fh.write(struct.pack('@i'))        
 
 
-# File: stlwrite.py
-# Purpose: Export 3D objects built of faces with 3 or 4 vertices, as
-# an ASCII or Binary STL file.
-# License: MIT License
-#
-# Original source from http://code.activestate.com/recipes/578246-stl-writer/
-# Modified by David Touretzky, November 2014, to compute surface normals.
 
-import math
-import struct
-
-ASCII_FACET = """facet normal {normal[0]:.4f} {normal[1]:.4f} {normal[2]:.4f}
-outer loop
-vertex {face[0][0]:.4f} {face[0][1]:.4f} {face[0][2]:.4f}
-vertex {face[1][0]:.4f} {face[1][1]:.4f} {face[1][2]:.4f}
-vertex {face[2][0]:.4f} {face[2][1]:.4f} {face[2][2]:.4f}
-endloop
-endfacet
-"""
-
-BINARY_HEADER ="80sI"
-BINARY_FACET = "12fH"
-
-def crossproduct(u,v):
-    s1 = u[1]*v[2] - u[2]*v[1]
-    s2 = u[2]*v[0] - u[0]*v[2]
-    s3 = u[0]*v[1] - u[1]*v[0]
-    return [s1, s2, s3]
-
-def norm(v):
-    return math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
-
-def normalize(v):
-    m = norm(v)
-    if m == 0:
-        m = 1
-    return [v[0]/m, v[1]/m, v[2]/m]
-
-def normalto(u,v):
-    return normalize(crossproduct(u,v))
-
-def diff(u,v):
-    return [u[0]-v[0], u[1]-v[1], u[2]-v[2]]
-
-class ASCII_STL_Writer:
-    """ Export 3D objects build of 3 or 4 vertices as ASCII STL file.
-    """
-    def __init__(self, stream):
-        self.fp = stream
-        self._write_header()
-
-    def _write_header(self):
-        self.fp.write("solid python\n")
-
-    def close(self):
-        self.fp.write("endsolid python\n")
-
-    def _write(self, face):
-        n = normalto(diff(face[0],face[1]),diff(face[1],face[2]))
-        self.fp.write(ASCII_FACET.format(normal=n,face=face))
-
-    def _split(self, face):
-        p1, p2, p3, p4 = face
-        return (p2, p1, p3), (p3, p1, p4)
-
-    def add_face(self, face):
-        """ Add one face with 3 or 4 vertices. """
-        if len(face) == 4:
-            face1, face2 = self._split(face)
-            self._write(face1)
-            self._write(face2)
-        elif len(face) == 3:
-            self._write(face)
-        else:
-            raise ValueError('only 3 or 4 vertices for each face')
-
-    def add_faces(self, faces):
-        """ Add many faces. """
-        for face in faces:
-            self.add_face(face)
-
-class Binary_STL_Writer(ASCII_STL_Writer):
-    """ Export 3D objects build of 3 or 4 vertices as binary STL file.
-    """
-    def __init__(self, stream):
-        self.counter = 0
-        ASCII_STL_Writer.__init__(self,stream)
-
-    def close(self):
-        self._write_header()
-
-    def _write_header(self):
-        self.fp.seek(0)
-        self.fp.write(struct.pack(BINARY_HEADER, b'Python Binary STL Writer', self.counter))
-
-    def _write(self, face):
-        self.counter += 1
-        n = normalto(diff(face[0],face[1]),diff(face[1],face[2]))
-        data = [
-            n[0], n[1], n[2],
-            face[0][0], face[0][1], face[0][2],
-            face[1][0], face[1][1], face[1][2],
-            face[2][0], face[2][1], face[2][2],
-            0
-        ]
-        self.fp.write(struct.pack(BINARY_FACET, *data))
-
-# def example():
-#     def get_triangles():
-#         p1 = (0, 0, 0)
-#         p2 = (1, 2, 3)
-#         p3 = (-5, -7, 4)
-#         p4 = (3, -2, 6)
-#         return [ [p1, p3, p2], [p2, p3, p4], [p4, p3, p1], [p4, p1, p2] ]
-#     filename = 'triangles.stl'
-#     with open(filename, 'wb') as fp:
-#         writer = ASCII_STL_Writer(fp)
-#         writer.add_faces(get_triangles())
-#         writer.close()
-#     print 'Wrote ' + filename
     
 def write(ver):
     with open("slab.stl", mode="wb")as fh:
-        writer = ASCII_STL_Writer(fh)
+        writer = wr.Binary_STL_Writer(fh)
         writer.add_faces(ver)
         writer.close()
     return
+# sim = dlnSC.simplices
+# vertex = dlnSC.vertices
+# #vertex = lc[ind]
+# from stl import mesh
+# volume = mesh.Mesh(np.zeros(sim.shape[0], dtype=mesh.Mesh.dtype))
+# for i, f in enumerate(sim):
+#     for j in range(3):
+#         volume.vectors[i][j] = vertex[f[j],:]
+# volume.save('slab3.stl')
 
-write(dln.vertices)
+dln = delny3D(lc)
+
+from vtk.util.numpy_support import vtk_to_numpy
+numpy_coordinates = vtk_to_numpy(dln)
+
+reader = vtk.vtkXMLUnstructuredGridReader()
+reader.SetFileName( "slabvtk.vtu" )
+reader.Update()
+
+
+Point_cordinates = reader.GetOutput().GetPoints().GetData()
+
+#write(vertex)
     #file = stlWrite(dln.vertices)
 # fig = plt.figure()
 # ax = plt.axes(projection='3d')
 # ax.scatter3D(lc[:,0], lc[:,1], lc[:,2])
 # plt.show()
-#dln = delny3D(lc)
+
 # #dln.write()
-#writer = vtk.vtkXMLUnstructuredGridWriter()
+writer = vtk.vtkXMLUnstructuredGridWriter()
 #writer.SetFileType("stl")
-#writer.SetFileName('slab2.vtu')
-#writer.SetInputData(dln)
-#writer.Write()
+writer.SetFileName('slabvtk.vtu')
+writer.SetInputData(dln)
+writer.Write()
 
 #pcd = o3d.geometry.PointCloud()
 #pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
