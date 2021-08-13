@@ -520,6 +520,8 @@ def deCastel(cPoints, t = 0.5):
 
     return B
 #todo : correct z axis position in pointcloud
+#numLayers is number of interpolation steps
+
 def getCarthesian(inFile, numLayers, prec):
     
     cPoints, vals = interWrap(inFile, numLayers)
@@ -544,65 +546,138 @@ def getCarthesian(inFile, numLayers, prec):
 lc = getCarthesian(inFile,5,30)
 
 
+
+def triSurf(inFile, nInter, nPrec):
+    
+    Layers, numLayers = getLayers(inFile)
+    
+    return
+
+tri1 = np.array([])
+tri2 = np.array([])
+for p in range(8):
+    numP = int(len(lc)/9)
+    nodeIdx = numP *p
+    shape = (int(numP*2)-2,3)
+    shapeS = (numP,3)
+    ind = np.zeros(shapeS, dtype = int)
+    ind2 = np.zeros(shapeS,dtype=int)
+    arrshift = numP-1
+    if p == 0:
+        for i in range(numP):
+            ind[i,0] = i
+            ind[i,1] = i+1
+            ind[i,2] = numP+i
+            
+            ind2[i,0] = numP +i
+            ind2[i,1] = numP + i+1
+            ind2[i,2] = i+1
+        tri1 = ind
+        tri2 = ind2
+    else:
+
+        for i in range(numP):
+            ind[i,0] = nodeIdx + i
+            ind[i,1] = nodeIdx + i+1
+            ind[i,2] = nodeIdx + arrshift+i
+            
+            ind2[i,0] = nodeIdx + arrshift +i
+            ind2[i,1] = nodeIdx + arrshift + i+1
+            ind2[i,2] = nodeIdx+ i+1
+            
+        tri2 = np.concatenate((ind2, tri2))    
+        tri1 = np.concatenate((ind, tri1))
+
+triangles = np.concatenate((tri1,tri2))
+    
+#triR = np.reshape(tri, (450*8,3))
+
+def triNormals(tri,lc):
+    normals = np.zeros((len(tri),3))
+    for i in range(len(tri)):
+        p1 = lc[tri[i,0],:]
+        p2 = lc[tri[i,1],:]
+        p3 = lc[tri[i,2],:]
+        norm = np.cross(p2-p1, p3-p1)
+        normals[i,:] = norm
+    return normals
+
+normals = triNormals(triangles, lc)
+
+mesh = np.zeros((7200*4,3))
+
+
+        
+for p in range(7200):
+    #first ind = first tri
+    mesh[p] = lc[triangles[p,0]]
+    mesh[p+1] = lc[triangles[p,1]]
+    mesh[p+2] = lc[triangles[p,2]]
+    mesh[p+3] = normals[p,:]
+     
+
 #from here it gets messy
 from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
-dlnSC = Delaunay(lc)
-hull = ConvexHull(lc)
+# dlnSC = Delaunay(lc)
+# hull = ConvexHull(lc)
 import numpy
 import struct
-import stl
-def stlWrite(ver):
-    class Stl(object):
-        dtype = numpy.dtype([
-            ('normals', numpy.float32, (3, )),
-            ('v0', numpy.float32, (3, )),
-            ('v1', numpy.float32, (3, )),
-            ('v2', numpy.float32, (3, )),
-            ('attr', 'u2', (1, )),
-        ])
-    
-        def __init__(self, header, data):
-            self.header = header
-            self.data = data
-    
-        @classmethod
-        def from_file(cls, filename, mode='rb'):
-            with open(filename, mode) as fh:
-                header = fh.read(80)
-                size, = struct.unpack('@i', fh.read(4))
-                data = numpy.fromfile(fh, dtype=cls.dtype, count=size)
-                return Stl(header, data)
-    
-        def to_file(self, filename, mode='wb'):
-            with open(filename, mode) as fh:
-                fh.write(self.header)
-                fh.write(struct.pack('@i', self.data.size))
-                self.data.tofile(fh)
-    file = Stl(header = 0 ,data = ver)
-    file.to_file("slab.stl")
-    return file
+#import stl
 
-def sw(ver):
-    class stl(object):
+
+# def sw(ver):
+#     class stl(object):
         
-        def __init__(self, n, v1, v2, v3):
-            self.n = n
-            self.v1 = v1
-            self.v2 = v2
-            self.v3 = v3
-            return
+#         def __init__(self, n, v1, v2, v3):
+#             self.n = n
+#             self.v1 = v1
+#             self.v2 = v2
+#             self.v3 = v3
+#             return
         
-    n = ver[:,0]
-    v1 = ver[:,1]
-    v2 = ver[:,2]
-    v3 = ver[:,3]
+#     n = ver[:,0]
+#     v1 = ver[:,1]
+#     v2 = ver[:,2]
+#     v3 = ver[:,3]
     
-    mesh = stl(n,v1,v2,v3)
-    with open("slab.stl", mode="wb")as fh:
-        fh.write(69)
-        fh.write(struct.pack('@i'))        
+#     mesh = stl(n,v1,v2,v3)
+#     with open("slab.stl", mode="wb")as fh:
+#         fh.write(69)
+#         fh.write(struct.pack('@i'))
 
+        
 
+class Stl(object):
+    dtype = numpy.dtype([
+        ('normals', numpy.float32, (3, )),
+        ('v0', numpy.float32, (3, )),
+        ('v1', numpy.float32, (3, )),
+        ('v2', numpy.float32, (3, )),
+        ('attr', 'u2', (1, )),
+    ])
+
+    def __init__(self, header, data):
+        self.header = header
+        self.data = data
+
+    @classmethod
+    def from_file(cls, filename, mode='rb'):
+        with open(filename, mode) as fh:
+            header = fh.read(80)
+            size, = struct.unpack('@i', fh.read(4))
+            data = numpy.fromfile(fh, dtype=cls.dtype, count=size)
+            return Stl(header, data)
+
+    def to_file(self, filename, mode='wb'):
+        with open(filename, mode) as fh:
+            fh.write(self.header)
+            fh.write(struct.pack('@i', self.data.size))
+            self.data.tofile(fh)
+
+head = "head"
+head = bytes(head, 'utf-8')
+file = Stl(head,mesh)
+file.to_file('mesh.stl')
 
     
 def write(ver):
@@ -621,31 +696,37 @@ def write(ver):
 #         volume.vectors[i][j] = vertex[f[j],:]
 # volume.save('slab3.stl')
 
-dln = delny3D(lc)
+# dln = delny3D(lc)
 
-from vtk.util.numpy_support import vtk_to_numpy
-numpy_coordinates = vtk_to_numpy(dln)
+# head = "head"
+# head = bytes(head, 'utf-8')
+# file = Stl(head,dlnSC.points)
+# file.to_file('rick.stl')
 
-reader = vtk.vtkXMLUnstructuredGridReader()
-reader.SetFileName( "slabvtk.vtu" )
-reader.Update()
+# test = Stl.from_file('rick.stl')
+# from vtk.util.numpy_support import vtk_to_numpy
+# numpy_coordinates = vtk_to_numpy(dln)
+
+# reader = vtk.vtkXMLUnstructuredGridReader()
+# reader.SetFileName( "slabvtk.vtu" )
+# reader.Update()
 
 
-Point_cordinates = reader.GetOutput().GetPoints().GetData()
+# Point_cordinates = reader.GetOutput().GetPoints().GetData()
 
-#write(vertex)
-    #file = stlWrite(dln.vertices)
-# fig = plt.figure()
-# ax = plt.axes(projection='3d')
-# ax.scatter3D(lc[:,0], lc[:,1], lc[:,2])
-# plt.show()
+# #write(vertex)
+#     #file = stlWrite(dln.vertices)
+# # fig = plt.figure()
+# # ax = plt.axes(projection='3d')
+# # ax.scatter3D(lc[:,0], lc[:,1], lc[:,2])
+# # plt.show()
 
-# #dln.write()
-writer = vtk.vtkXMLUnstructuredGridWriter()
-#writer.SetFileType("stl")
-writer.SetFileName('slabvtk.vtu')
-writer.SetInputData(dln)
-writer.Write()
+# # #dln.write()
+# writer = vtk.vtkXMLUnstructuredGridWriter()
+# #writer.SetFileType("stl")
+# writer.SetFileName('slabvtk.vtu')
+# writer.SetInputData(dln)
+# writer.Write()
 
 #pcd = o3d.geometry.PointCloud()
 #pcd.points = o3d.utility.Vector3dVector(lc[:,:3])

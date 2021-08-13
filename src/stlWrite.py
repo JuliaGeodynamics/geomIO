@@ -8,7 +8,7 @@ Created on Thu Jul 22 14:57:32 2021
 import struct
 import numpy
 
-def stlWrite(ver):
+
     class Stl(object):
         dtype = numpy.dtype([
             ('normals', numpy.float32, (3, )),
@@ -36,7 +36,7 @@ def stlWrite(ver):
                 fh.write(struct.pack('@i', self.data.size))
                 self.data.tofile(fh)
     file = Stl()
-    return
+
 
 
 # if __name__ == '__main__':
