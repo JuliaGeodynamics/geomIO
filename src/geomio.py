@@ -307,88 +307,6 @@ def makeBezier(cPoints):
     Points = Bezier(start,c1,c2,end)
         
     return Points
-#write getcoords
-#wrpng starting points, need to loop over starting points
-
-#this function ignores all medium layers somehow, gotta interp from layer to layer
-#another bug, doesnt work with only two layers? :O
-def interp(cPoints, zCoor, numPoints = 5):
-    """
-    This is the 1D interpolation in y direction
-
-    Parameters
-    ----------
-    cPoints : List of controlpoints for all zusammengehörigen 
-    bezierabschnitten
-    numPoints : Number of interpolationpoints
-         The default is 5.
-
-    Returns
-    -------
-    Volume : list of array, contains all the controlpoint tuples for start, c1,c2, end
-
-    """
-
-    if not isinstance(cPoints, list):
-        sys.exit("Input for interpolation must be list of controllpoint class")
-    
-    start= np.zeros([len(cPoints),2])
-    c1 = np.zeros([len(cPoints),2])
-    c2 = np.zeros([len(cPoints),2])
-    end = np.zeros([len(cPoints),2])
-    
-    #shift the interpolation layers away from first layer
-    Inter = zCoor[-1]- zCoor[0]
-    Inter = Inter/numPoints
-    zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numPoints)
-    #print(zValues) 
-    
-    for i in range(len(cPoints)):
-        start[i,0] = cPoints[i].start[0]
-        start[i,1] = cPoints[i].start[1]
-        c1[i,0] = cPoints[i].c1[0]
-        c1[i,1] = cPoints[i].c1[1]
-        c2[i,0] = cPoints[i].c2[0]
-        c2[i,1] = cPoints[i].c2[1]
-        end[i,0] = cPoints[i].end[0]
-        end[i,1] = cPoints[i].end[1]
-
-
-    # sX = np.linspace(start[0,0], start[-1,0], numPoints)
-    # c1X = np.linspace(c1[0,0], c1[-1,0], numPoints)
-    # c2X = np.linspace(c2[0,0], c2[-1,0], numPoints)
-    # endX =  np.linspace(end[0,0], end[-1,0], numPoints)
-
-    #interpolation for X
-    startX = interpolate.interp1d(zCoor, start[:,0])
-    c1X = interpolate.interp1d(zCoor, c1[:,0])    
-    c2X = interpolate.interp1d(zCoor, c2[:,0])
-    endX = interpolate.interp1d(zCoor, end[:,0])
-    
-        #interpolation for Y
-    startY = interpolate.interp1d(zCoor, start[:,1])
-    c1Y = interpolate.interp1d(zCoor, c1[:,1])    
-    c2Y = interpolate.interp1d(zCoor, c2[:,1])
-    endY = interpolate.interp1d(zCoor, end[:,1])
-    
-    #print(c1X(zValues))
-    VolumeX = np.array([startX(zValues),c1X(zValues),
-                        c2X(zValues), endX(zValues) ])
-    VolumeY = np.array([startY(zValues),c1Y(zValues),
-                        c2Y(zValues), endY(zValues) ])
-    Segment =[]
-    for r in range(numPoints):
-        CP = np.array([])
-        CP = np.array([VolumeX[:,r],VolumeY[:,r]])
-        BEZ = makeBezier(CP)
-        Segment.append(BEZ)
-    #Volume = list([startI,c1I, c2I, endI])
-    #Volume = startX(zValues)
-    #print(Volume)
-    #Volume = list([np.array([sX,startI(sX)]),np.array([c1X,c1I(c1X)]), 
-                   #np.array([c2X,c2I(c2X)]), np.array([endX,endI(endX)])])
-
-    return Segment 
 
 def getZvalues(inFile):
     Layers, numLayers = getLayers(inFile)
@@ -427,15 +345,16 @@ def getZvalues(inFile):
 #Interp1D not necessary
 
 def interZlayers(zCoor,numLayers):
-    print(zCoor)
+    #print(zCoor)
     Inter = zCoor[-1]- zCoor[0]
-    print(Inter)
+    #print(Inter)
     Inter = Inter/numLayers
     zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numLayers)
-    print(zValues)
+    #print(zValues)
     return zValues
 
-#remove hardcoding
+#es ist halt wirklich die interpolation die von anfang bis end inter aber in der mitte ignoriert
+
 def compEmpty(zCoor, numLayers):
     zValues = interZlayers(zCoor, numLayers)
     zCoor = np.append([zValues], zCoor)
@@ -447,16 +366,112 @@ def compEmpty(zCoor, numLayers):
             idx[i] = 1
             
     return idx, vals
+#write getcoords
+#wrpng starting points, need to loop over starting points
+
+#this function ignores all medium layers somehow, gotta interp from layer to layer
+#another bug, doesnt work with only two layers? :O ----> fixed, was @interwrap
+def interp(cPoints, zCoor, numPoints = 5):
+    """
+    This is the 1D interpolation in y direction
+
+    Parameters
+    ----------
+    cPoints : List of controlpoints for all zusammengehörigen 
+    bezierabschnitten
+    numPoints : Number of interpolationpoints
+         The default is 5.
+
+    Returns
+    -------
+    Volume : list of array, contains all the controlpoint tuples for start, c1,c2, end
+
+    """
+
+    if not isinstance(cPoints, list):
+        sys.exit("Input for interpolation must be list of controllpoint class")
+    
+    start= np.zeros([len(cPoints),2])
+    c1 = np.zeros([len(cPoints),2])
+    c2 = np.zeros([len(cPoints),2])
+    end = np.zeros([len(cPoints),2])
+    
+    #shift the interpolation layers away from first layer
+    Inter = zCoor[-1]- zCoor[0]
+    Inter = Inter/numPoints
+    zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numPoints)
+    #print(zValues)
+    #zValues = 
+    #print(zValues) 
+    
+    for i in range(len(cPoints)):
+        start[i,0] = cPoints[i].start[0]
+        start[i,1] = cPoints[i].start[1]
+        c1[i,0] = cPoints[i].c1[0]
+        c1[i,1] = cPoints[i].c1[1]
+        c2[i,0] = cPoints[i].c2[0]
+        c2[i,1] = cPoints[i].c2[1]
+        end[i,0] = cPoints[i].end[0]
+        end[i,1] = cPoints[i].end[1]
+    #print(start[:,0])
+
+
+    # sX = np.linspace(start[0,0], start[-1,0], numPoints)
+    # c1X = np.linspace(c1[0,0], c1[-1,0], numPoints)
+    # c2X = np.linspace(c2[0,0], c2[-1,0], numPoints)
+    # endX =  np.linspace(end[0,0], end[-1,0], numPoints)
+
+    #interpolation for X
+    startX = interpolate.interp1d(zCoor, start[:,0])
+    c1X = interpolate.interp1d(zCoor, c1[:,0])    
+    c2X = interpolate.interp1d(zCoor, c2[:,0])
+    endX = interpolate.interp1d(zCoor, end[:,0])
+    
+        #interpolation for Y
+    startY = interpolate.interp1d(zCoor, start[:,1])
+    c1Y = interpolate.interp1d(zCoor, c1[:,1])    
+    c2Y = interpolate.interp1d(zCoor, c2[:,1])
+    endY = interpolate.interp1d(zCoor, end[:,1])
+    
+    #print(c1X(zValues))
+    VolumeX = np.array([startX(zValues),c1X(zValues),
+                        c2X(zValues), endX(zValues) ])
+    VolumeY = np.array([startY(zValues),c1Y(zValues),
+                        c2Y(zValues), endY(zValues) ])
+    #print("VolumeX")
+    Segment =[]
+    for r in range(numPoints):
+        CP = np.array([])
+        CP = np.array([VolumeX[:,r],VolumeY[:,r]])
+        BEZ = makeBezier(CP)
+        Segment.append(BEZ)
+    #Volume = list([startI,c1I, c2I, endI])
+    #Volume = startX(zValues)
+    #print(Volume)
+    #Volume = list([np.array([sX,startI(sX)]),np.array([c1X,c1I(c1X)]), 
+                   #np.array([c2X,c2I(c2X)]), np.array([endX,endI(endX)])])
+
+    return Segment 
+
+
     
 def interWrap(inFile, numInterLayers):
     zCoor = getZvalues(inFile)
+    
     idx, vals = compEmpty(zCoor, numInterLayers)
 
     cPoints = getCpoints(inFile)
     interLayers= list()
-
+    #terrible hardcoding bug
+    bezier = list()
     for p in range(len(cPoints[0])):
-        bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
+        bezier = list()
+        for r in range(len(cPoints)):
+            bezier.append(cPoints[r][p])
+            #print(p)
+                
+        
+            #bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
         seg = interp(bezier, zCoor, numInterLayers)
         interLayers.append(seg)
     
@@ -487,13 +502,19 @@ paths, attributes = svg2paths(inFile)
 # text = f.readlines()
 Layers, numLayers = getLayers(inFile)
 #checkPath(attributes, Layers)
+interLayers= list()
 cPoints = getCpoints(inFile)
-
+zCoor = getZvalues(inFile)
+# for p in range(len(cPoints[0])):
+#         bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
+#         seg = interp(bezier, zCoor, 5)
+#         interLayers.append(seg)
+idx, val = compEmpty(zCoor, 6)
 
     
 #bezier = list([cPoints[0][0],cPoints[1][0],cPoints[2][0],cPoints[3][0]])
 
-cPoints, vals = interWrap(inFile, numInterLayers=6)
+cPointsnew, vals = interWrap(inFile, numInterLayers=6)
 
 
 
@@ -550,7 +571,7 @@ def getCarthesian(inFile, numInterLayers, prec):
     LayerCoors = np.reshape(LayerCoors,(newshape,3))
     return LayerCoors
 
-#lc = getCarthesian(inFile,5,30)
+lc = getCarthesian(inFile,6,1)
 
 
 
@@ -782,7 +803,7 @@ def plotCloud3D(inFile):
     
     import open3d as o3d
     Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(inFile,25,50)
+    lc = getCarthesian(inFile,26,50)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
     #pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
@@ -790,7 +811,7 @@ def plotCloud3D(inFile):
     o3d.visualization.draw_geometries([pcd])
     return
 
-#plotCloud3D(inFile)
+plotCloud3D(inFile)
 
 def plotCas(curve, nPoints = 50):
     """
