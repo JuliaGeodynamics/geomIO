@@ -25,16 +25,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35"
-     inkscape:cx="-111.42857"
-     inkscape:cy="560"
+     inkscape:zoom="0.7"
+     inkscape:cx="257.34405"
+     inkscape:cy="772.56576"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer3"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1052"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-width="1853"
+     inkscape:window-height="1145"
+     inkscape:window-x="1987"
+     inkscape:window-y="27"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata830">
@@ -52,6 +52,7 @@
      inkscape:label="20"
      inkscape:groupmode="layer"
      id="layer1"
+     style="display:inline"
      sodipodi:insensitive="true">
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -62,24 +63,26 @@
   </g>
   <g
      inkscape:groupmode="layer"
-     id="layer3"
+     id="layer2"
      inkscape:label="40"
      sodipodi:insensitive="true">
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 137.39493,113.32173 C 137.39493,113.32173 153.41104,168.50772 149.49017,192.69673 146.93605,208.45382 110.18065,223.69078 110.18065,223.69078"
-       id="path1378-6"
+       d="M 131.94125,54.296619 C 131.94125,54.296619 84.457356,141.2326 80.536486,165.42161 77.982366,181.1787 77.512681,216.82638 77.512681,216.82638"
+       id="path1378-6-3"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="csc" />
   </g>
   <g
      inkscape:groupmode="layer"
-     id="layer2"
-     inkscape:label="61">
+     id="layer3"
+     inkscape:label="60"
+     sodipodi:insensitive="true"
+     style="display:inline">
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 131.94125,54.296619 C 131.94125,54.296619 84.457356,141.2326 80.536486,165.42161 77.982366,181.1787 77.512681,216.82638 77.512681,216.82638"
-       id="path1378-6-3"
+       d="M 137.39493,113.32173 C 137.39493,113.32173 153.41104,168.50772 149.49017,192.69673 146.93605,208.45382 110.18065,223.69078 110.18065,223.69078"
+       id="path1378-6"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="csc" />
   </g>

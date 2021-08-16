@@ -362,7 +362,7 @@ def compEmpty(zCoor, numLayers):
     #print(vals)
     idx = np.zeros(len(vals))
     for i in range(len(idx)):
-        if vals[i] in zValues:
+        if vals[i] in zValues and vals[i] != vals[i-1]:
             idx[i] = 1
             
     return idx, vals
@@ -453,6 +453,29 @@ def interp(cPoints, zCoor, numPoints = 5):
 
     return Segment 
 
+def interInter(cPoints, zCoor, numPoints):
+    
+    Inter = zCoor[-1]- zCoor[0]
+    Inter = Inter/numPoints
+    zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numPoints)
+    
+    start= np.zeros([2,2])
+    c1 = np.zeros([2,2])
+    c2 = np.zeros(2,2])
+    end = np.zeros(2,2])
+    
+    for i in range(len(cPoints)):
+        start[i,0] = cPoints[i].start[0]
+        start[i,1] = cPoints[i].start[1]
+        c1[i,0] = cPoints[i].c1[0]
+        c1[i,1] = cPoints[i].c1[1]
+        c2[i,0] = cPoints[i].c2[0]
+        c2[i,1] = cPoints[i].c2[1]
+        end[i,0] = cPoints[i].end[0]
+        end[i,1] = cPoints[i].end[1]
+    
+    return
+    
 
     
 def interWrap(inFile, numInterLayers):
@@ -468,11 +491,18 @@ def interWrap(inFile, numInterLayers):
         bezier = list()
         for r in range(len(cPoints)):
             bezier.append(cPoints[r][p])
+            if r== len(cPoints):
+                continue
+            
+            i1 = cPoints[r][p]
+            i2 = cPoints[r+1][p]#
+            intervall = list((i1,i2))
             #print(p)
                 
         
             #bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
         seg = interp(bezier, zCoor, numInterLayers)
+        #print(seg)
         interLayers.append(seg)
     
     reshape = list()
@@ -485,8 +515,12 @@ def interWrap(inFile, numInterLayers):
         reshape.append(layer)
     #learn enumerate
     count = 0
+    # print(idx)
+    # print(len(idx))
+    # print(len(reshape))
     for i in range(len(idx)):
         if idx[i] == 1:
+            #print("c")
             cPoints.insert(i, reshape[count])
             count +=1
             
@@ -494,27 +528,6 @@ def interWrap(inFile, numInterLayers):
     return cPoints, vals               
 
         
-inFile = "input/debug.svg"
-paths, attributes = svg2paths(inFile)
-#sortLayers(inFile)
-
-# f = open(inFile)#
-# text = f.readlines()
-Layers, numLayers = getLayers(inFile)
-#checkPath(attributes, Layers)
-interLayers= list()
-cPoints = getCpoints(inFile)
-zCoor = getZvalues(inFile)
-# for p in range(len(cPoints[0])):
-#         bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
-#         seg = interp(bezier, zCoor, 5)
-#         interLayers.append(seg)
-idx, val = compEmpty(zCoor, 6)
-
-    
-#bezier = list([cPoints[0][0],cPoints[1][0],cPoints[2][0],cPoints[3][0]])
-
-cPointsnew, vals = interWrap(inFile, numInterLayers=6)
 
 
 
@@ -548,7 +561,8 @@ def deCastel(cPoints, t = 0.5):
     return B
 #todo : correct z axis position in pointcloud
 #numLayers is number of interpolation steps
-
+#bug with only 2 inter
+#
 def getCarthesian(inFile, numInterLayers, prec):
     
     cPoints, vals = interWrap(inFile, numInterLayers)
@@ -557,6 +571,7 @@ def getCarthesian(inFile, numInterLayers, prec):
     t = np.linspace(0,1, prec)
     carthCoors = list()
     LayerCoors = np.array([])
+    print(len(vals))
     for r in range(len(vals)):
         
         for p in range(len(cPoints[0])):
@@ -571,7 +586,6 @@ def getCarthesian(inFile, numInterLayers, prec):
     LayerCoors = np.reshape(LayerCoors,(newshape,3))
     return LayerCoors
 
-lc = getCarthesian(inFile,6,1)
 
 
 
@@ -585,7 +599,7 @@ def triNormals(tri,lc):
         normals[i,:] = norm
     return normals
 
-def triSurf(inFile, nInter, nPrec):
+def triSurfOpen(inFile, nInter, nPrec):
     
     Layers, numLayers = getLayers(inFile)
     lc = getCarthesian(inFile,nInter,nPrec)
@@ -601,8 +615,11 @@ def triSurf(inFile, nInter, nPrec):
         ind = np.zeros(shapeS, dtype = int)
         ind2 = np.zeros(shapeS,dtype=int)
         arrshift = numP-1
+        counter = 0
         if p == 0:
-            for i in range(numP):
+            for i in range(numP-1):
+                if i == 0:
+                    continue
                 ind[i,0] = i
                 ind[i,1] = i+1
                 ind[i,2] = numP+i
@@ -610,11 +627,14 @@ def triSurf(inFile, nInter, nPrec):
                 ind2[i,0] = numP +i
                 ind2[i,1] = numP + i+1
                 ind2[i,2] = i+1
+                counter +=1
             tri1 = ind
             tri2 = ind2
         else:
     
-            for i in range(numP):
+            for i in range(numP-1):
+                if i == 0:
+                    continue
                 ind[i,0] = nodeIdx + i
                 ind[i,1] = nodeIdx + i+1
                 ind[i,2] = nodeIdx + arrshift+i
@@ -622,6 +642,7 @@ def triSurf(inFile, nInter, nPrec):
                 ind2[i,0] = nodeIdx + arrshift +i
                 ind2[i,1] = nodeIdx + arrshift + i+1
                 ind2[i,2] = nodeIdx+ i+1
+                counter +=1
                 
             tri2 = np.concatenate((ind2, tri2))    
             tri1 = np.concatenate((ind, tri1))
@@ -630,6 +651,7 @@ def triSurf(inFile, nInter, nPrec):
     normals = triNormals(triangles, lc)
 
     mesh1 = np.array([])
+    #print(counter)
     
     
             
@@ -641,14 +663,111 @@ def triSurf(inFile, nInter, nPrec):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
+
     
+    
+    return mesh1, triangles
+
+def triSurfClose(inFile, nInter, nPrec):
+    
+    Layers, numLayers = getLayers(inFile)
+    lc = getCarthesian(inFile,nInter,nPrec)
+
+    nQuads = nInter+numLayers -1
+    tri1 = np.array([])
+    tri2 = np.array([])
+    for p in range(nQuads):
+        numP = int(len(lc)/(nQuads+1))
+        nodeIdx = numP *p
+        shape = (int(numP*2)-2,3)
+        shapeS = (numP,3)
+        ind = np.zeros(shapeS, dtype = int)
+        ind2 = np.zeros(shapeS,dtype=int)
+        arrshift = numP-1
+        counter = 0
+        if p == 0:
+            for i in range(numP):
+
+                ind[i,0] = i
+                ind[i,1] = i+1
+                ind[i,2] = numP+i
+                
+                ind2[i,0] = numP +i
+                ind2[i,1] = numP + i+1
+                ind2[i,2] = i+1
+                counter +=1
+            tri1 = ind
+            tri2 = ind2
+        else:
+    
+            for i in range(numP):
+
+                ind[i,0] = nodeIdx + i
+                ind[i,1] = nodeIdx + i+1
+                ind[i,2] = nodeIdx + arrshift+i
+                
+                ind2[i,0] = nodeIdx + arrshift +i
+                ind2[i,1] = nodeIdx + arrshift + i+1
+                ind2[i,2] = nodeIdx+ i+1
+                counter +=1
+                
+            tri2 = np.concatenate((ind2, tri2))    
+            tri1 = np.concatenate((ind, tri1))
+    
+    triangles = np.concatenate((tri1,tri2))
+    normals = triNormals(triangles, lc)
+
+    mesh1 = np.array([])
+    #print(counter)
+    
+    
+            
+    for p in range(len(triangles)):
+        #first ind = first tri
+        mesh1 = np.concatenate((mesh1, normals[p]))
+        mesh1 = np.concatenate((mesh1, lc[triangles[p,0]]))
+        mesh1 = np.concatenate((mesh1, lc[triangles[p,1]]))
+        mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
+        
+    mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
+
+            
     
     
     return mesh1, triangles
 
 
     
-#triangles, face = triSurf(inFile,5,30)
+
+
+inFile = "input/slab.svg"
+paths, attributes = svg2paths(inFile)
+#sortLayers(inFile)
+
+# f = open(inFile)#
+# text = f.readlines()
+Layers, numLayers = getLayers(inFile)
+#checkPath(attributes, Layers)
+interLayers= list()
+cPoints = getCpoints(inFile)
+zCoor = getZvalues(inFile)
+# for p in range(len(cPoints[0])):
+#         bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
+#         seg = interp(bezier, zCoor, 5)
+#         interLayers.append(seg)
+idx, val = compEmpty(zCoor, 5)
+lc = getCarthesian(inFile,3,30)
+
+#triangles, face = triSurfOpen(inFile,5,30)
+
+    
+#bezier = list([cPoints[0][0],cPoints[1][0],cPoints[2][0],cPoints[3][0]])
+
+#cPointsnew, vals = interWrap(inFile, numInterLayers=6)
+
+
+def getBounds():
+    return
 
 
 
@@ -676,7 +795,7 @@ from stl import mesh
 #         cube.vectors[i][j] = lc[f[j],:]
 
 #Write the mesh to file "cube.stl"
-#cube.save('slab.stl')
+#cube.save('debug.stl')
 
 
 # def sw(ver):
@@ -798,12 +917,12 @@ def write(ver):
 #-----------Poisson rec------------
 
 #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
-
+inFile = "input/slab.svg"
 def plotCloud3D(inFile):
     
     import open3d as o3d
     Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(inFile,26,50)
+    lc = getCarthesian(inFile,4,25)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
     #pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
@@ -811,7 +930,7 @@ def plotCloud3D(inFile):
     o3d.visualization.draw_geometries([pcd])
     return
 
-plotCloud3D(inFile)
+#plotCloud3D(inFile)
 
 def plotCas(curve, nPoints = 50):
     """
