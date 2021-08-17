@@ -400,6 +400,14 @@ def interp(cPoints, zCoor, numPoints = 5):
     Inter = zCoor[-1]- zCoor[0]
     Inter = Inter/numPoints
     zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numPoints)
+    
+    for d in range(len(zValues)):
+        if d ==0 :
+            continue
+        if zValues[d]  != zValues[d-1]:
+            zValues[d] = zValues[d]+2
+    #print(zValues)
+        
     #print(zValues)
     #zValues = 
     #print(zValues) 
@@ -438,7 +446,10 @@ def interp(cPoints, zCoor, numPoints = 5):
                         c2X(zValues), endX(zValues) ])
     VolumeY = np.array([startY(zValues),c1Y(zValues),
                         c2Y(zValues), endY(zValues) ])
-    #print("VolumeX")
+    # print("-----------------------------------")
+    # print(VolumeY[0])
+    # print(start[:,1])
+    
     Segment =[]
     for r in range(numPoints):
         CP = np.array([])
@@ -452,17 +463,17 @@ def interp(cPoints, zCoor, numPoints = 5):
                    #np.array([c2X,c2I(c2X)]), np.array([endX,endI(endX)])])
 
     return Segment 
-
-def interInter(cPoints, zCoor, numPoints):
     
-    Inter = zCoor[-1]- zCoor[0]
-    Inter = Inter/numPoints
-    zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numPoints)
+def interInter(cPoints, interZ, numPoints):
+    
+    #Inter = interZ[1]- interZ[0]
+    #Inter = Inter/numPoints
+    zValues = np.linspace(interZ[0], interZ[-1], numPoints)
     
     start= np.zeros([2,2])
     c1 = np.zeros([2,2])
-    c2 = np.zeros(2,2])
-    end = np.zeros(2,2])
+    c2 = np.zeros([2,2])
+    end = np.zeros([2,2])
     
     for i in range(len(cPoints)):
         start[i,0] = cPoints[i].start[0]
@@ -473,8 +484,32 @@ def interInter(cPoints, zCoor, numPoints):
         c2[i,1] = cPoints[i].c2[1]
         end[i,0] = cPoints[i].end[0]
         end[i,1] = cPoints[i].end[1]
+        
+    startX = interpolate.interp1d(interZ, start[:,0])
+    c1X = interpolate.interp1d(interZ, c1[:,0])    
+    c2X = interpolate.interp1d(interZ, c2[:,0])
+    endX = interpolate.interp1d(interZ, end[:,0])
     
-    return
+        #interpolation for Y
+    startY = interpolate.interp1d(interZ, start[:,1])
+    c1Y = interpolate.interp1d(interZ, c1[:,1])    
+    c2Y = interpolate.interp1d(interZ, c2[:,1])
+    endY = interpolate.interp1d(interZ, end[:,1])
+    
+    VolumeX = np.array([startX(zValues),c1X(zValues),
+                        c2X(zValues), endX(zValues) ])
+    VolumeY = np.array([startY(zValues),c1Y(zValues),
+                        c2Y(zValues), endY(zValues) ])
+    
+    Segment =[]
+    for r in range(numPoints):
+        CP = np.array([])
+        CP = np.array([VolumeX[:,r],VolumeY[:,r]])
+        BEZ = makeBezier(CP)
+        Segment.append(BEZ)
+    
+    
+    return Segment, zValues
     
 
     
@@ -485,26 +520,34 @@ def interWrap(inFile, numInterLayers):
 
     cPoints = getCpoints(inFile)
     interLayers= list()
+    iS = list()
+    zC = np.array([])
     #terrible hardcoding bug
     bezier = list()
     for p in range(len(cPoints[0])):
         bezier = list()
         for r in range(len(cPoints)):
             bezier.append(cPoints[r][p])
-            if r== len(cPoints):
+            if r== len(cPoints)-1:
                 continue
             
             i1 = cPoints[r][p]
             i2 = cPoints[r+1][p]#
             intervall = list((i1,i2))
-            #print(p)
+            #print(intervall)
+            interZ = np.array([zCoor[r],zCoor[r+1]])
+            #print(intervallZ)
+            ss, z = interInter(intervall, interZ, 50)
+            iS.append(ss)
+            
+            
                 
-        
+        zC = np.append([zC],z)
             #bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
         seg = interp(bezier, zCoor, numInterLayers)
         #print(seg)
         interLayers.append(seg)
-    
+    print(iS)
     reshape = list()
     for r in range(numInterLayers):
         layer = list()
@@ -756,7 +799,7 @@ zCoor = getZvalues(inFile)
 #         seg = interp(bezier, zCoor, 5)
 #         interLayers.append(seg)
 idx, val = compEmpty(zCoor, 5)
-lc = getCarthesian(inFile,3,30)
+lc = getCarthesian(inFile,5,30)
 
 #triangles, face = triSurfOpen(inFile,5,30)
 
@@ -922,7 +965,7 @@ def plotCloud3D(inFile):
     
     import open3d as o3d
     Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(inFile,4,25)
+    lc = getCarthesian(inFile,50,25)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
     #pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
