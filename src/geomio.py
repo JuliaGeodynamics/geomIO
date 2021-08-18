@@ -371,7 +371,7 @@ def compEmpty(zCoor, numLayers):
 
 #this function ignores all medium layers somehow, gotta interp from layer to layer
 #another bug, doesnt work with only two layers? :O ----> fixed, was @interwrap
-def interp(cPoints, zCoor, numPoints = 5):
+def interp(cPoints, zCoor, numPoints = 5, meth = 'zero'):
     """
     This is the 1D interpolation in y direction
 
@@ -430,16 +430,16 @@ def interp(cPoints, zCoor, numPoints = 5):
     # endX =  np.linspace(end[0,0], end[-1,0], numPoints)
 
     #interpolation for X
-    startX = interpolate.interp1d(zCoor, start[:,0])
-    c1X = interpolate.interp1d(zCoor, c1[:,0])    
-    c2X = interpolate.interp1d(zCoor, c2[:,0])
-    endX = interpolate.interp1d(zCoor, end[:,0])
+    startX = interpolate.interp1d(zCoor, start[:,0], meth)
+    c1X = interpolate.interp1d(zCoor, c1[:,0],meth)    
+    c2X = interpolate.interp1d(zCoor, c2[:,0],meth)
+    endX = interpolate.interp1d(zCoor, end[:,0],meth)
     
         #interpolation for Y
-    startY = interpolate.interp1d(zCoor, start[:,1])
-    c1Y = interpolate.interp1d(zCoor, c1[:,1])    
-    c2Y = interpolate.interp1d(zCoor, c2[:,1])
-    endY = interpolate.interp1d(zCoor, end[:,1])
+    startY = interpolate.interp1d(zCoor, start[:,1],meth)
+    c1Y = interpolate.interp1d(zCoor, c1[:,1],meth)    
+    c2Y = interpolate.interp1d(zCoor, c2[:,1],meth)
+    endY = interpolate.interp1d(zCoor, end[:,1],meth)
     
     #print(c1X(zValues))
     VolumeX = np.array([startX(zValues),c1X(zValues),
@@ -466,9 +466,9 @@ def interp(cPoints, zCoor, numPoints = 5):
     
 def interInter(cPoints, interZ, numPoints):
     
-    #Inter = interZ[1]- interZ[0]
-    #Inter = Inter/numPoints
-    zValues = np.linspace(interZ[0], interZ[-1], numPoints)
+    Inter = interZ[1]- interZ[0]
+    Inter = Inter/numPoints
+    zValues = np.linspace(interZ[0]+ Inter, interZ[-1], numPoints, False)
     
     start= np.zeros([2,2])
     c1 = np.zeros([2,2])
@@ -520,6 +520,45 @@ def interWrap(inFile, numInterLayers):
 
     cPoints = getCpoints(inFile)
     interLayers= list()
+#terrible hardcoding bug
+    bezier = list()
+    for p in range(len(cPoints[0])):
+        bezier = list()
+        for r in range(len(cPoints)):
+            bezier.append(cPoints[r][p])
+
+        seg = interp(bezier, zCoor, numInterLayers)
+
+        interLayers.append(seg)
+
+    reshape = list()
+    for r in range(numInterLayers):
+        layer = list()
+        for p in range(len(cPoints[0])):    
+    
+            x = interLayers[p][r]
+            layer.append(x)
+        reshape.append(layer)
+    #learn enumerate
+    count = 0
+
+    for i in range(len(idx)):
+        if idx[i] == 1:
+            #print("c")
+            cPoints.insert(i, reshape[count])
+            count +=1
+            
+        
+    return cPoints, vals   
+
+    
+def callIntervall(inFile, numInterLayers):
+    zCoor = getZvalues(inFile)
+    
+    idx, vals = compEmpty(zCoor, numInterLayers)
+
+    cPoints = getCpoints(inFile)
+    interLayers= list()
     iS = list()
     zC = np.array([])
     #terrible hardcoding bug
@@ -527,7 +566,7 @@ def interWrap(inFile, numInterLayers):
     for p in range(len(cPoints[0])):
         bezier = list()
         for r in range(len(cPoints)):
-            bezier.append(cPoints[r][p])
+            #bezier.append(cPoints[r][p])
             if r== len(cPoints)-1:
                 continue
             
@@ -537,23 +576,24 @@ def interWrap(inFile, numInterLayers):
             #print(intervall)
             interZ = np.array([zCoor[r],zCoor[r+1]])
             #print(intervallZ)
-            ss, z = interInter(intervall, interZ, 50)
+            ss, z = interInter(intervall, interZ, 5)
             iS.append(ss)
             
             
-                
-        zC = np.append([zC],z)
+            if p<0:
+                continue
+            zC = np.append([zC],z)
             #bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
-        seg = interp(bezier, zCoor, numInterLayers)
+        #seg = interp(bezier, zCoor, numInterLayers)
         #print(seg)
-        interLayers.append(seg)
-    print(iS)
+        #interLayers.append(seg)
+    #print(iS)
     reshape = list()
     for r in range(numInterLayers):
         layer = list()
         for p in range(len(cPoints[0])):    
     
-            x = interLayers[p][r]
+            x = 0
             layer.append(x)
         reshape.append(layer)
     #learn enumerate
@@ -568,7 +608,7 @@ def interWrap(inFile, numInterLayers):
             count +=1
             
         
-    return cPoints, vals               
+    return zC, iS                           
 
         
 
@@ -614,7 +654,7 @@ def getCarthesian(inFile, numInterLayers, prec):
     t = np.linspace(0,1, prec)
     carthCoors = list()
     LayerCoors = np.array([])
-    print(len(vals))
+    #print(len(vals))
     for r in range(len(vals)):
         
         for p in range(len(cPoints[0])):
@@ -629,7 +669,74 @@ def getCarthesian(inFile, numInterLayers, prec):
     LayerCoors = np.reshape(LayerCoors,(newshape,3))
     return LayerCoors
 
+def Inter(segment, numInter,inFile, x):
+    zCoor = getZvalues(inFile)
+    Layers, numLayers = getLayers(inFile)
+    
+    stab = zCoor[1]- zCoor[0]
+    stab = stab/numLayers
+    zValues = np.linspace(zCoor[0]+ stab, zCoor[-1], numInter, False)
+    
+    
+    xvals = segment[:,0]
+    yvals= segment[:,1]
 
+    xVals = np.reshape(xvals,(numLayers, len(x)))
+    yVals = np.reshape(yvals,(numLayers,len(x)))
+    volume = np.array([])
+    for i in range(len(x)):
+        interX = interpolate.interp1d(zCoor, xVals[:,i])
+        interY = interpolate.interp1d(zCoor, yVals[:,i])
+        coors = np.array([[interX(zValues)],[interY(zValues)]])
+        volume = np.append([coors], volume)
+
+    volume = np.reshape(volume,(len(x)*numInter,2))        
+    return volume
+
+
+#remove hardcoding
+
+def interDisc(inFile, numInterLayers):
+    zCoor = getZvalues(inFile)
+    Layers, numLayers = getLayers(inFile)
+    idx, vals = compEmpty(zCoor, numInterLayers)
+    x = np.linspace(0,1,10)
+    cPoints = getCpoints(inFile)
+    volume = np.array([])
+    for i in range(len(cPoints[0])):
+        segment = np.array([])
+
+        for r in range(len(cPoints)):
+            B = deCastel(cPoints[r][i],x)
+            #print(B.shape)
+            segment = np.append([B],segment)
+        segment = np.reshape(segment,(50,2))
+        
+        re = Inter(segment, numInterLayers, inFile, x)
+        volume = np.append([volume], re)
+    volume = np.reshape(volume,(numLayers+numInterLayers, (i+1)*len(x)))
+        #Volume = Inter(segment, numInterLayers)
+    return volume
+ 
+
+inFile = "input/slab.svg"
+paths, attributes = svg2paths(inFile)
+#sortLayers(inFile)
+seg = interDisc(inFile, 5)
+# f = open(inFile)#
+# text = f.readlines()
+Layers, numLayers = getLayers(inFile)
+#checkPath(attributes, Layers)
+#interLayers= list()
+cPoints = getCpoints(inFile)
+#zCoor = getZvalues(inFile)
+# for p in range(len(cPoints[0])):
+#         bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
+#         seg = interp(bezier, zCoor, 5)
+#         interLayers.append(seg)
+# idx, val = compEmpty(zCoor, 5)
+# lc = getCarthesian(inFile,5,30)
+# a,b = callIntervall(inFile,5)
 
 
 def triNormals(tri,lc):
@@ -783,23 +890,7 @@ def triSurfClose(inFile, nInter, nPrec):
     
 
 
-inFile = "input/slab.svg"
-paths, attributes = svg2paths(inFile)
-#sortLayers(inFile)
 
-# f = open(inFile)#
-# text = f.readlines()
-Layers, numLayers = getLayers(inFile)
-#checkPath(attributes, Layers)
-interLayers= list()
-cPoints = getCpoints(inFile)
-zCoor = getZvalues(inFile)
-# for p in range(len(cPoints[0])):
-#         bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
-#         seg = interp(bezier, zCoor, 5)
-#         interLayers.append(seg)
-idx, val = compEmpty(zCoor, 5)
-lc = getCarthesian(inFile,5,30)
 
 #triangles, face = triSurfOpen(inFile,5,30)
 
