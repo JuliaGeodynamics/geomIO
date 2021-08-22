@@ -5,7 +5,7 @@ Spyder Editor
 This is a temporary script file.
 """
 
-# import numpy as np
+# import np as np
 # import sys, os
 
 # from svglib.svglib import svg2rlg
@@ -796,7 +796,11 @@ def getBounds(inFile, numInter, nPrec):
     xBound = np.array([np.amin(lc[:,0]),np.amax(lc[:,0])])
     yBound = np.array([np.amin(lc[:,1]),np.amax(lc[:,1])])
     zBound = np.array([np.amin(lc[:,2]),np.amax(lc[:,2])])
-    print(xBound,yBound,zBound)
+    print("---------------------------")
+    print("x boundaries are:"+ str(xBound))
+    print("y boundaries are:"+ str(yBound))
+    print("z boundaries are:"+ str(zBound))
+    print("---------------------------")
     return
 
 
@@ -809,7 +813,7 @@ from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay
 def wSTL(inFile, numInter, nPrec,name, volume = False):
     """
     placeholder function for writing stl files
-    uses the lib numpy stl
+    uses the lib np stl
     """
     
     import struct
@@ -821,6 +825,7 @@ def wSTL(inFile, numInter, nPrec,name, volume = False):
             
         triangles, face = triSurfOpen(inFile,numInter,nPrec)
     lc = getCarthesian(inFile, numInter,nPrec)
+    os.chdir("output")
     cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
     for i, f in enumerate(face):
         for j in range(3):
@@ -828,21 +833,22 @@ def wSTL(inFile, numInter, nPrec,name, volume = False):
     
     #Write the mesh to file "cube.stl"
     cube.save(str(name))
+    os.chdir("..")
     return
 
-lc = getCarthesian(inFile,5,25)
-getBounds(inFile,5,25)
+# lc = getCarthesian(inFile,5,25)
+# getBounds(inFile,5,25)
 
 #wSTL(inFile,25,50,'foldlay.stl')
 
         
 
 class Stl(object):
-    dtype = numpy.dtype([
-        ('normals', numpy.float32, (3, )),
-        ('v0', numpy.float32, (3, )),
-        ('v1', numpy.float32, (3, )),
-        ('v2', numpy.float32, (3, )),
+    dtype = np.dtype([
+        ('normals', np.float32, (3, )),
+        ('v0', np.float32, (3, )),
+        ('v1', np.float32, (3, )),
+        ('v2', np.float32, (3, )),
         ('attr', 'u2', (1, )),
     ])
 
@@ -855,7 +861,7 @@ class Stl(object):
         with open(filename, mode) as fh:
             header = fh.read(80)
             size, = struct.unpack('@i', fh.read(4))
-            data = numpy.fromfile(fh, dtype=cls.dtype, count=size)
+            data = np.fromfile(fh, dtype=cls.dtype, count=size)
             return Stl(header, data)
 
     def to_file(self, filename, mode='wb'):
@@ -894,8 +900,8 @@ def write(ver):
 # file.to_file('rick.stl')
 
 # test = Stl.from_file('rick.stl')
-# from vtk.util.numpy_support import vtk_to_numpy
-# numpy_coordinates = vtk_to_numpy(dln)
+# from vtk.util.np_support import vtk_to_np
+# np_coordinates = vtk_to_np(dln)
 
 # reader = vtk.vtkXMLUnstructuredGridReader()
 # reader.SetFileName( "slabvtk.vtu" )
@@ -934,7 +940,7 @@ def write(ver):
 #-----------Poisson rec------------
 
 #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
-inFile = "input/over.svg"
+#inFile = "input/over.svg"
 def plotCloud3D(inFile,nInterLayers, nPrec):
     """
     uses open3D to display the pointcloud
@@ -1041,6 +1047,13 @@ def Dim(cPoints, nLayers = 15):
 
         adLayers.append(newbez)
     return  adLayers
+
+
+def geomioFront(inFile, numInterLayers, nPrec, name, volume = False):
+    
+    wSTL(inFile, numInterLayers, nPrec, name, volume)
+    
+    return
 
 #l = Dim(cPoints)
 #segments = groupSegments(cPoints)
