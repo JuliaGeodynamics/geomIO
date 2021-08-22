@@ -294,7 +294,8 @@ def getCpoints(inFile):
     
 def makeBezier(cPoints):
     """
-    
+    This functions converts the svgpathtools bezier to a simple bezier class
+    with start, end controlpoint 1 and 2
     """
     #if len(cPoints) != 4:
      #   sys.exit("bezier Curves must be cubic")
@@ -309,6 +310,19 @@ def makeBezier(cPoints):
     return Points
 
 def getZvalues(inFile):
+    """
+    this function reads the Z-coordinate values passed with the individual 
+    layernames
+
+    Parameters
+    ----------
+    inFile : name of the Inputfile
+
+    Returns
+    -------
+    zCoor : list of Z coordinates
+
+    """
     Layers, numLayers = getLayers(inFile)
     names = list()
     for z in Layers.values():
@@ -345,6 +359,11 @@ def getZvalues(inFile):
 #Interp1D not necessary
 
 def interZlayers(zCoor,numLayers):
+    """
+    This function generates the Z coordinates where the Layers are interpolated
+    numLayers refers to the number of Layers to interpolate(numInterLayers)
+    
+    """
     #print(zCoor)
     Inter = zCoor[-1]- zCoor[0]
     #print(Inter)
@@ -356,6 +375,10 @@ def interZlayers(zCoor,numLayers):
 #es ist halt wirklich die interpolation die von anfang bis end inter aber in der mitte ignoriert
 
 def compEmpty(zCoor, numLayers):
+    """
+    this function returns a complete array of all z Coordinates
+    as well as an index array, where 1= given layer and 0 = interpolated layer
+    """
     zValues = interZlayers(zCoor, numLayers)
     zCoor = np.append([zValues], zCoor)
     vals = np.sort(zCoor)
@@ -382,6 +405,7 @@ def interp(cPoints, zCoor, numPoints = 5, meth = 'linear'):
     bezierabschnitten
     numPoints : Number of interpolationpoints
          The default is 5.
+    meth = Crystal meth. Jk interpolation method, currently only linear is allowed
 
     Returns
     -------
@@ -473,6 +497,12 @@ def interp(cPoints, zCoor, numPoints = 5, meth = 'linear'):
 
     
 def interWrap(inFile, numInterLayers):
+    """
+    Function to call interpolation,
+    returns a list of all new controlpoints properly sorted as well as all 
+    z coordinates
+    
+    """
     zCoor = getZvalues(inFile)
     
     idx, vals = compEmpty(zCoor, numInterLayers)
@@ -550,7 +580,11 @@ def deCastel(cPoints, t = 0.5):
 #bug with only 2 inter
 #
 def getCarthesian(inFile, numInterLayers, prec):
-    
+    """
+    This function computes the coordinates for all
+    the points in the pointcloud, prec being the number 
+    of points to compute per bezier segment 
+    """
     cPoints, vals = interWrap(inFile, numInterLayers)
 
     #print(cPoints)
@@ -575,7 +609,7 @@ def getCarthesian(inFile, numInterLayers, prec):
 
  
 
-inFile = "input/slab.svg"
+inFile = "input/over.svg"
 paths, attributes = svg2paths(inFile)
 #sortLayers(inFile)
 #seg = interDisc(inFile, 5)
@@ -596,6 +630,10 @@ cPoints = getCpoints(inFile)
 
 
 def triNormals(tri,lc):
+    """
+    Function to compute the normal of a triangle
+    currently unused
+    """
     normals = np.zeros((len(tri),3))
     for i in range(len(tri)):
         p1 = lc[tri[i,0],:]
@@ -606,7 +644,9 @@ def triNormals(tri,lc):
     return normals
 
 def triSurfOpen(inFile, nInter, nPrec):
-    
+    """
+    surface triangulation for open surfaces
+    """
     Layers, numLayers = getLayers(inFile)
     lc = getCarthesian(inFile,nInter,nPrec)
 
@@ -675,7 +715,9 @@ def triSurfOpen(inFile, nInter, nPrec):
     return mesh1, triangles
 
 def triSurfClose(inFile, nInter, nPrec):
-    
+    """
+    surface triangulation for closed volumes
+    """
     Layers, numLayers = getLayers(inFile)
     lc = getCarthesian(inFile,nInter,nPrec)
 
@@ -743,70 +785,55 @@ def triSurfClose(inFile, nInter, nPrec):
     return mesh1, triangles
 
 
-    
 
 
-
-
-#triangles, face = triSurfOpen(inFile,5,30)
-
-    
-#bezier = list([cPoints[0][0],cPoints[1][0],cPoints[2][0],cPoints[3][0]])
-
-#cPointsnew, vals = interWrap(inFile, numInterLayers=6)
-
-
-def getBounds():
+def getBounds(inFile, numInter, nPrec):
+    """
+    printing the min and ma boundaries of the mesh/volume
+    to adapt grid of thermomechanical coed(eg LaMEM)
+    """
+    lc = getCarthesian(inFile, numInter,nPrec)
+    xBound = np.array([np.amin(lc[:,0]),np.amax(lc[:,0])])
+    yBound = np.array([np.amin(lc[:,1]),np.amax(lc[:,1])])
+    zBound = np.array([np.amin(lc[:,2]),np.amax(lc[:,2])])
+    print(xBound,yBound,zBound)
     return
 
 
-
-
-
-    
-    # mesh[p] = lc[triangles[p,0]]
-    # mesh[p+1] = lc[triangles[p,1]]
-    # mesh[p+2] = lc[triangles[p,2]]
-    # mesh[p+3] = normals[p,:]
-     
-
-#from here it gets messy
 from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
 # dlnSC = Delaunay(lc)
 # hull = ConvexHull(lc)
-import numpy
-import struct
-import stl
-from stl import mesh
-
-# cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
-# for i, f in enumerate(face):
-#     for j in range(3):
-#         cube.vectors[i][j] = lc[f[j],:]
-
-#Write the mesh to file "cube.stl"
-#cube.save('debug.stl')
 
 
-# def sw(ver):
-#     class stl(object):
-        
-#         def __init__(self, n, v1, v2, v3):
-#             self.n = n
-#             self.v1 = v1
-#             self.v2 = v2
-#             self.v3 = v3
-#             return
-        
-#     n = ver[:,0]
-#     v1 = ver[:,1]
-#     v2 = ver[:,2]
-#     v3 = ver[:,3]
+
+def wSTL(inFile, numInter, nPrec,name, volume = False):
+    """
+    placeholder function for writing stl files
+    uses the lib numpy stl
+    """
     
-#     mesh = stl(n,v1,v2,v3)
-#     with open("slab.stl", mode="wb")as fh:
-#         fh.write(69)
-#         fh.write(struct.pack('@i'))
+    import struct
+    import stl
+    from stl import mesh
+    if volume:
+            triangles, face = triSurfClose(inFile,numInter,nPrec)
+    else:
+            
+        triangles, face = triSurfOpen(inFile,numInter,nPrec)
+    lc = getCarthesian(inFile, numInter,nPrec)
+    cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(face):
+        for j in range(3):
+            cube.vectors[i][j] = lc[f[j],:]
+    
+    #Write the mesh to file "cube.stl"
+    cube.save(str(name))
+    return
+
+lc = getCarthesian(inFile,5,25)
+getBounds(inFile,5,25)
+
+#wSTL(inFile,25,50,'foldlay.stl')
 
         
 
@@ -908,11 +935,13 @@ def write(ver):
 
 #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
 inFile = "input/over.svg"
-def plotCloud3D(inFile):
-    
+def plotCloud3D(inFile,nInterLayers, nPrec):
+    """
+    uses open3D to display the pointcloud
+    """
     import open3d as o3d
     Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(inFile,50,25)
+    lc = getCarthesian(inFile,nInterLayers,nPrec)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
     #pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
@@ -920,12 +949,12 @@ def plotCloud3D(inFile):
     o3d.visualization.draw_geometries([pcd])
     return
 
-plotCloud3D(inFile)
+#plotCloud3D(inFile)
 
 def plotCas(curve, nPoints = 50):
     """
     Plots the Bezier segments with de Casteljaus algorithm
-
+    rather useless
     """
     t = np.linspace(0,1,nPoints)
 
