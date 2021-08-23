@@ -609,16 +609,16 @@ def getCarthesian(inFile, numInterLayers, prec):
 
  
 
-inFile = "input/over.svg"
-paths, attributes = svg2paths(inFile)
-#sortLayers(inFile)
-#seg = interDisc(inFile, 5)
-# f = open(inFile)#
-# text = f.readlines()
-Layers, numLayers = getLayers(inFile)
-#checkPath(attributes, Layers)
-#interLayers= list()
-cPoints = getCpoints(inFile)
+# inFile = "input/over.svg"
+# paths, attributes = svg2paths(inFile)
+# #sortLayers(inFile)
+# #seg = interDisc(inFile, 5)
+# # f = open(inFile)#
+# # text = f.readlines()
+# Layers, numLayers = getLayers(inFile)
+# #checkPath(attributes, Layers)
+# #interLayers= list()
+# cPoints = getCpoints(inFile)
 #zCoor = getZvalues(inFile)
 # for p in range(len(cPoints[0])):
 #         bezier = list([cPoints[0][p],cPoints[1][p],cPoints[2][p],cPoints[3][p]])
@@ -714,6 +714,41 @@ def triSurfOpen(inFile, nInter, nPrec):
     
     return mesh1, triangles
 
+from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
+
+def layerTri(lc, nump):
+    
+
+    
+    if (numP % 2) == 0:
+        shape = (int(numP-2),3)
+        index1 = np.zeros(shape, dtype = int)
+        index2 = np.zeros(shape, dtype = int)
+        for i in range(numP/2):
+            index1[i,0] = i
+            index1[i,1] = i+1
+            index1[i,2] = numP-1-i
+            
+            index2[i,0] = i
+            index2[i,1] = numP-1-i
+            index2[i,2] = numP -2 -i
+    
+    triangles = np.concatenate((index1,index2))
+    normals = triNormals(triangles, lc)
+    
+    mesh = np.array([])
+    for p in range(len(triangles)):
+        #first ind = first tri
+        mesh = np.concatenate((mesh, normals[p]))
+        mesh = np.concatenate((mesh, lc[triangles[p,0]]))
+        mesh = np.concatenate((mesh, lc[triangles[p,1]]))
+        mesh = np.concatenate((mesh, lc[triangles[p,2]]))
+        
+    mesh = np.reshape(mesh,(len(mesh)*4,3))
+            
+    return
+
+
 def triSurfClose(inFile, nInter, nPrec):
     """
     surface triangulation for closed volumes
@@ -724,8 +759,46 @@ def triSurfClose(inFile, nInter, nPrec):
     nQuads = nInter+numLayers -1
     tri1 = np.array([])
     tri2 = np.array([])
+    #number of points per layer
+    numP = int(len(lc)/(nQuads+1))
+    #get x and y coordinates from first and last layer
+    cov1 = lc[0:numP,0:2]
+    cov1Z = lc[0:numP,:]
+    #last layer index, start of last layer
+    LLI = len(lc)-numP
+    cov2 = lc[LLI:-1,0:2]
+    cov2Z =lc[LLI:-1,:]
+    startCov = Delaunay(cov1,furthest_site=True)
+    endCov = Delaunay(cov2, furthest_site=True)
+    # triCov1 = startCov.simplices
+    # triCov2 = endCov.simplices
+    
+    # #cover = np.concatenate((triCov1,triCov2))
+    # normals1 = triNormals(triCov1, cov1Z)
+    # normals2 = triNormals(triCov2, cov2Z)
+    # mesh2 = np.array([])
+    # mesh3 = np.array([])
+    # for j in range(len(triCov1)):
+    #     mesh2 =np.concatenate((mesh2, normals1[j]))
+    #     mesh2 = np.concatenate((mesh2,cov1Z[triCov1[j,0]]))
+    #     mesh2 = np.concatenate((mesh2,cov1Z[triCov1[j,1]]))
+    #     mesh2 = np.concatenate((mesh2,cov1Z[triCov1[j,2]]))
+    
+    # mesh2 = np.reshape(mesh2,(len(triCov1)*4,3))
+    
+    # for y in range(len(triCov2)):
+    #     mesh3 =np.concatenate((mesh3, normals2[y]))
+    #     mesh3 = np.concatenate((mesh3,cov1Z[triCov2[y,0]]))
+    #     mesh3 = np.concatenate((mesh3,cov1Z[triCov2[y,1]]))
+    #     mesh3 = np.concatenate((mesh3,cov1Z[triCov2[y,2]]))
+    
+    # mesh3 = np.reshape(mesh3,(len(triCov2)*4,3))
+    
+
+        
+
     for p in range(nQuads):
-        numP = int(len(lc)/(nQuads+1))
+
         nodeIdx = numP *p
         shape = (int(numP*2)-2,3)
         shapeS = (numP,3)
@@ -778,11 +851,20 @@ def triSurfClose(inFile, nInter, nPrec):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
+    # mesh1 = np.concatenate((mesh1,mesh2))
+    # mesh1 = np.concatenate((mesh1,mesh3))
 
-            
+    # triangles = np.concatenate((triangles,triCov1))
+    # faceLast = triCov2+LLI
+    # triangles = np.concatenate((triangles,faceLast))        
     
     
     return mesh1, triangles
+
+# inFile = 'input/slab.svg'
+
+# mesh1, tri = triSurfClose(inFile, 5,20)
+
 
 
 
@@ -804,7 +886,6 @@ def getBounds(inFile, numInter, nPrec):
     return
 
 
-from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
 # dlnSC = Delaunay(lc)
 # hull = ConvexHull(lc)
 
@@ -820,7 +901,7 @@ def wSTL(inFile, numInter, nPrec,name, volume = False):
     import stl
     from stl import mesh
     if volume:
-            triangles, face = triSurfClose(inFile,numInter,nPrec)
+        triangles, face = triSurfClose(inFile,numInter,nPrec)
     else:
             
         triangles, face = triSurfOpen(inFile,numInter,nPrec)
