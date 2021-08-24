@@ -636,6 +636,7 @@ def triNormals(tri,lc):
     """
     normals = np.zeros((len(tri),3))
     for i in range(len(tri)):
+        #print(i)
         p1 = lc[tri[i,0],:]
         p2 = lc[tri[i,1],:]
         p3 = lc[tri[i,2],:]
@@ -716,15 +717,18 @@ def triSurfOpen(inFile, nInter, nPrec):
 
 from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
 
-def layerTri(lc, nump):
+#def fakeNormals(triangles, last = True):
+    
+
+def layerTri(lc, numP, LLI, last = True):
     
 
     
     if (numP % 2) == 0:
-        shape = (int(numP-2),3)
+        shape = (int((numP-2)/2),3)
         index1 = np.zeros(shape, dtype = int)
         index2 = np.zeros(shape, dtype = int)
-        for i in range(numP/2):
+        for i in range(len(index1)):
             index1[i,0] = i
             index1[i,1] = i+1
             index1[i,2] = numP-1-i
@@ -733,9 +737,33 @@ def layerTri(lc, nump):
             index2[i,1] = numP-1-i
             index2[i,2] = numP -2 -i
     
-    triangles = np.concatenate((index1,index2))
-    normals = triNormals(triangles, lc)
+        triangles = np.concatenate((index1,index2))
+
+    else:
+        shape = (int((numP-3)/2),3)
+        index1 = np.zeros(shape, dtype = int)
+        index2 = np.zeros(shape, dtype = int)
+        for i in range(len(index1)):
+            index1[i,0] = i+1
+            index1[i,1] = i+2
+            index1[i,2] = numP-1-i
+            
+            index2[i,0] = i+1
+            index2[i,1] = numP-i -1
+            index2[i,2] = numP -2 -i
     
+        first = np.array([[0,1,numP-1]])
+        triangles = np.concatenate((index1,index2))
+        triangles = np.concatenate((triangles, first))
+        
+    normals = triNormals(triangles, lc)
+    # if last:
+        
+    #     normals = np.zeros((len(triangles),3))
+    #     normals[:,2] = 1
+    # else:
+    #     normals = np.zeros((len(triangles),3))
+    #     normals[:,2] = -1
     mesh = np.array([])
     for p in range(len(triangles)):
         #first ind = first tri
@@ -744,9 +772,17 @@ def layerTri(lc, nump):
         mesh = np.concatenate((mesh, lc[triangles[p,1]]))
         mesh = np.concatenate((mesh, lc[triangles[p,2]]))
         
-    mesh = np.reshape(mesh,(len(mesh)*4,3))
+    mesh = np.reshape(mesh,(len(triangles)*4,3))
+    if last and (numP % 2) == 0:
+        trueIdx = np.concatenate((index1 + LLI, index2 + LLI))
+        triangles = trueIdx
+    elif last:
+        trueIdx = np.concatenate((index1 + LLI, index2 + LLI))
+        triangles = np.concatenate((trueIdx, first + LLI))
+
+        
             
-    return
+    return mesh, triangles
 
 
 def triSurfClose(inFile, nInter, nPrec):
@@ -762,37 +798,22 @@ def triSurfClose(inFile, nInter, nPrec):
     #number of points per layer
     numP = int(len(lc)/(nQuads+1))
     #get x and y coordinates from first and last layer
-    cov1 = lc[0:numP,0:2]
+    #cov1 = lc[0:numP,0:2]
     cov1Z = lc[0:numP,:]
     #last layer index, start of last layer
     LLI = len(lc)-numP
-    cov2 = lc[LLI:-1,0:2]
+    #cov2 = lc[LLI:-1,0:2]
     cov2Z =lc[LLI:-1,:]
-    startCov = Delaunay(cov1,furthest_site=True)
-    endCov = Delaunay(cov2, furthest_site=True)
-    # triCov1 = startCov.simplices
-    # triCov2 = endCov.simplices
+    dummy = np.array([lc[len(lc)-1]])
+    cov2Z = np.concatenate((cov2Z,dummy))
+    # startCov = Delaunay(cov1,furthest_site=True)
+    # endCov = Delaunay(cov2, furthest_site=True)
     
-    # #cover = np.concatenate((triCov1,triCov2))
-    # normals1 = triNormals(triCov1, cov1Z)
-    # normals2 = triNormals(triCov2, cov2Z)
-    # mesh2 = np.array([])
-    # mesh3 = np.array([])
-    # for j in range(len(triCov1)):
-    #     mesh2 =np.concatenate((mesh2, normals1[j]))
-    #     mesh2 = np.concatenate((mesh2,cov1Z[triCov1[j,0]]))
-    #     mesh2 = np.concatenate((mesh2,cov1Z[triCov1[j,1]]))
-    #     mesh2 = np.concatenate((mesh2,cov1Z[triCov1[j,2]]))
-    
-    # mesh2 = np.reshape(mesh2,(len(triCov1)*4,3))
-    
-    # for y in range(len(triCov2)):
-    #     mesh3 =np.concatenate((mesh3, normals2[y]))
-    #     mesh3 = np.concatenate((mesh3,cov1Z[triCov2[y,0]]))
-    #     mesh3 = np.concatenate((mesh3,cov1Z[triCov2[y,1]]))
-    #     mesh3 = np.concatenate((mesh3,cov1Z[triCov2[y,2]]))
-    
-    # mesh3 = np.reshape(mesh3,(len(triCov2)*4,3))
+    cCF, cTF = layerTri(cov1Z,numP,LLI, False)
+    cCL, cTL = layerTri(cov2Z, numP, LLI, True)
+    cover = np.concatenate((cCF,cCL))
+    covTri = np.concatenate((cTF,cTL))
+
     
 
         
@@ -851,6 +872,9 @@ def triSurfClose(inFile, nInter, nPrec):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
+    mesh1 = np.concatenate((mesh1,cover))
+    triangles = np.concatenate((triangles,covTri))
+    #for d in range(2):
     # mesh1 = np.concatenate((mesh1,mesh2))
     # mesh1 = np.concatenate((mesh1,mesh3))
 
@@ -913,7 +937,7 @@ def wSTL(inFile, numInter, nPrec,name, volume = False):
             cube.vectors[i][j] = lc[f[j],:]
     
     #Write the mesh to file "cube.stl"
-    cube.save(str(name))
+    cube.save(str(name),mode=stl.Mode.BINARY )
     os.chdir("..")
     return
 

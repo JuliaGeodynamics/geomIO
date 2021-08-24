@@ -2,29 +2,30 @@ import sys, os
 import geomio 
 
 #name of the inputfile
-inFile = "input/succ.svg"
+inFile = "input/slab.svg"
 
 #name of the stl file which will be generated
-name = 'foldReuter5.stl'
+name = 'slabcubic.stl'
 
 #wether it is a closed volume or an open surface
-Volume = False
+Volume = True
 
 #how many layers are interpolated in total
-numInterLayers = 20
+numInterLayers = 5
 
 #number of points that are computed per bezier segment
-nPrec = 25
+nPrec = 2
 
 #calling the main function
 geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
 
 #plot the pointcloud. requiers open3d
+
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)
 #l,nl = geomio.getLayers(inFile)
 
 #get the voundaries of the mesh/volume
-#geomio.getBounds(inFile, numInterLayers, nPrec)
+geomio.getBounds(inFile, numInterLayers, nPrec)
 
 
 
