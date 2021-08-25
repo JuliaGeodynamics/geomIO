@@ -72,7 +72,7 @@ def getLayers(inFile):
     for i in range(len(index)-1):
         #print(i)#
         if i > 0:
-            if compNum != initNum:
+            if compNum != initNum and "$" not in str(text[index[i]:index[i+1]])  :
                 #print(initNum,compNum)
                 sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
         compNum = 0
@@ -102,6 +102,7 @@ def getLayers(inFile):
                     pathSTR = pathSTR[1]
                     Layers[pathSTR] = layer
 
+    
         #Layers.append(Paths)
     return Layers, numLayers
 
@@ -269,6 +270,17 @@ def sortLayers(inFile):
             c +=1      
     return 
 
+def ignore(inFile):
+    
+    
+    Layers, numLayers = getLayers(inFile)
+    ignore = np.zeros(numLayers)
+    for q,p in enumerate(Layers.values()):
+        if "$" in p:
+            ignore[q] = 1
+
+    return ignore
+
 def getCpoints(inFile):
     """
     This function generates a list of quadratic bezier Controlpoints
@@ -284,9 +296,16 @@ def getCpoints(inFile):
 
     """
     paths, attributes = svg2paths(inFile)
+    
+    ###-----------hier rein basteln---------
     cPoints = list()
-    for i in range(len(paths)):
-        line = paths[i]
+    ig  = ignore(inFile)
+    pathsR = list()
+    for r in range(len(ig)):
+        if ig[r]  == 0:
+            pathsR.append(paths[r])
+    for i in range(len(pathsR)):
+        line = pathsR[i]
         points = controlPoints(line)
         cPoints.append(points)
     
@@ -331,6 +350,8 @@ def getZvalues(inFile):
     zCoor = np.array([], dtype = float)    
     for i in range(len(names)):
         dig = []
+        if "$" in names[i]:
+            continue
         if "p" in names[i]:
             dig = names[i].split("p")
 
@@ -340,6 +361,7 @@ def getZvalues(inFile):
                 #print(dig[0])
                 power = int(len(dig[1]))
                 num = int(dig[0])- (int(dig[1])*(10**-(int(len(dig[1])))))
+        
             else:
                 power = int(len(dig[1]))
                 num = int(dig[0])+ (int(dig[1])*(10**-(int(len(dig[1])))))
@@ -941,6 +963,13 @@ def wSTL(inFile, numInter, nPrec,name, volume = False):
     os.chdir("..")
     return
 
+
+def wMulti(inFile, numInter, nPrec, names, volume):
+    import struct
+    import stl
+    from stl import mesh
+    
+    
 # lc = getCarthesian(inFile,5,25)
 # getBounds(inFile,5,25)
 
