@@ -732,6 +732,7 @@ def triSurfOpen(inFile, nInter, nPrec):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
+    np.save("surf",mesh1)
 
     
     
@@ -795,6 +796,7 @@ def layerTri(lc, numP, LLI, last = True):
         mesh = np.concatenate((mesh, lc[triangles[p,2]]))
         
     mesh = np.reshape(mesh,(len(triangles)*4,3))
+   
     if last and (numP % 2) == 0:
         trueIdx = np.concatenate((index1 + LLI, index2 + LLI))
         triangles = trueIdx
@@ -806,6 +808,27 @@ def layerTri(lc, numP, LLI, last = True):
             
     return mesh, triangles
 
+def triangulateCover(lc):
+    numP = len(lc)
+    shape = len(lc)-2
+    ind = np.zeros((shape,3))
+    triangles = np.zeros((shape,3), dtype = int)
+    for i in range(shape):
+        triangles[i,0] = i 
+        triangles[i,1] = i+1
+        triangles[i,2] = numP-2-i
+    normals = triNormals(triangles, lc)
+    mesh = np.array([])
+    for p in range(len(triangles)):
+        #first ind = first tri
+        mesh = np.concatenate((mesh, normals[p]))
+        mesh = np.concatenate((mesh, lc[triangles[p,0]]))
+        mesh = np.concatenate((mesh, lc[triangles[p,1]]))
+        mesh = np.concatenate((mesh, lc[triangles[p,2]]))
+        
+    mesh = np.reshape(mesh,(len(triangles)*4,3))
+    
+    return  mesh, triangles
 
 def triSurfClose(inFile, nInter, nPrec):
     """
@@ -817,6 +840,8 @@ def triSurfClose(inFile, nInter, nPrec):
     nQuads = nInter+numLayers -1
     tri1 = np.array([])
     tri2 = np.array([])
+    
+    #========Section where the "covers" are done : faulty
     #number of points per layer
     numP = int(len(lc)/(nQuads+1))
     #get x and y coordinates from first and last layer
@@ -831,14 +856,19 @@ def triSurfClose(inFile, nInter, nPrec):
     # startCov = Delaunay(cov1,furthest_site=True)
     # endCov = Delaunay(cov2, furthest_site=True)
     
-    cCF, cTF = layerTri(cov1Z,numP,LLI, False)
-    cCL, cTL = layerTri(cov2Z, numP, LLI, True)
+    #cCF, cTF = layerTri(cov1Z,numP,LLI, False)
+    #cCL, cTL = layerTri(cov2Z, numP, LLI, True)
+    cCF, cTF = triangulateCover(cov1Z)
+    cCL, cTL = triangulateCover(cov2Z)
+    cTL += LLI
+    #coordinatses of both covers
     cover = np.concatenate((cCF,cCL))
+    #index of the triangles in lc
     covTri = np.concatenate((cTF,cTL))
 
     
 
-        
+    #=======section for inside: working    
 
     for p in range(nQuads):
 
@@ -904,7 +934,7 @@ def triSurfClose(inFile, nInter, nPrec):
     # faceLast = triCov2+LLI
     # triangles = np.concatenate((triangles,faceLast))        
     
-    
+    #return cover, covTri
     return mesh1, triangles
 
 # inFile = 'input/slab.svg'
@@ -937,7 +967,7 @@ def getBounds(inFile, numInter, nPrec):
 
 
 
-def wSTL(inFile, numInter, nPrec,name, volume = False):
+def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "a"):
     """
     placeholder function for writing stl files
     uses the lib np stl
@@ -959,7 +989,11 @@ def wSTL(inFile, numInter, nPrec,name, volume = False):
             cube.vectors[i][j] = lc[f[j],:]
     
     #Write the mesh to file "cube.stl"
-    cube.save(str(name),mode=stl.Mode.BINARY )
+    if mode == "a":
+        
+        cube.save(str(name),mode=stl.Mode.ASCII )
+    elif mode == "b":
+        cube.save(str(name),mode=stl.Mode.BINARY )
     os.chdir("..")
     return
 
@@ -1011,10 +1045,14 @@ class Stl(object):
 
     
 def write(ver):
+    header = 0
     with open("slab.stl", mode="wb")as fh:
-        writer = wr.Binary_STL_Writer(fh)
-        writer.add_faces(ver)
-        writer.close()
+#        writer = wr.Binary_STL_Writer(fh)
+ #       writer.add_faces(ver)
+  #      writer.close()
+         fh.write(header)
+         fh.write(struct.pack)
+  
     return
 # sim = dlnSC.simplices
 # vertex = dlnSC.vertices
@@ -1183,9 +1221,9 @@ def Dim(cPoints, nLayers = 15):
     return  adLayers
 
 
-def geomioFront(inFile, numInterLayers, nPrec, name, volume = False):
+def geomioFront(inFile, numInterLayers, nPrec, name, volume = False, mode = "a"):
     
-    wSTL(inFile, numInterLayers, nPrec, name, volume)
+    wSTL(inFile, numInterLayers, nPrec, name, volume, mode)
     
     return
 
