@@ -1,10 +1,7 @@
 import sys, os
 import geomio
 import svgpathtools
-"""
 
- 
-"""
 #name of the inputfile
 inFile = "input/graben.svg"
 
