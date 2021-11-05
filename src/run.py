@@ -1,28 +1,26 @@
 import sys, os
 import geomio
-
+import svgpathtools
 """
-To do:
-    -fix closed volumes#done 
-    -add variable stl#done
-    -add inside meshlayer
-    
+
  
 """
 #name of the inputfile
-inFile = "input/livedemo.svg"
+inFile = "input/graben.svg"
 
 #name of the stl file which will be generated
-name = 'live.stl'
+name = 'graben.stl'
 
 #wether it is a closed volume or an open surface
 Volume = False
 
 #how many layers are interpolated in total
-numInterLayers = 8
+numInterLayers = 4
 
 #number of points that are computed per bezier segment
-nPrec = 4
+nPrec = 40
+
+
 
 #calling the main function
 geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)

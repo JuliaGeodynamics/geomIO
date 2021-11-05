@@ -63,13 +63,14 @@ def gridWrap(surf, grid):
     for i in range(cells):
         top = grid[:,i]
         top[2] = upBound
-        for p in range(len(surf)):    
-            if intersec(grid[:,i],top,surf[p,0],surf[p,1],surf[p,2]):
+        for p in range(len(surf)):
+            #dreiecke initialisieren
+            if intersec(grid[:,i],top,surf[p,:],surf[p,1],surf[p,2]):
                 Phase[i]=0
         
     return Phase
 
-Ph = gridWrap(surf,grid)
+#Ph = gridWrap(surf,grid)
 
     
         

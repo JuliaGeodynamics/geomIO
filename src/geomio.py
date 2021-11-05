@@ -73,8 +73,8 @@ def getLayers(inFile):
         #print(i)#
         if i > 0:
             if compNum != initNum and "$" not in str(text[index[i]:index[i+1]])  :
-                #print(initNum,compNum)
-                sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
+                print(initNum,compNum)
+                #sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
         compNum = 0
         for p in range(index[i],index[i+1]):
             if "inkscape:label"  in text[p]:
@@ -106,6 +106,11 @@ def getLayers(inFile):
         #Layers.append(Paths)
     return Layers, numLayers
 
+def scaling():
+    return
+    
+    
+    
 def plot_line(inp, tol):
     #depracated
     
@@ -274,11 +279,12 @@ def ignore(inFile):
     
     
     Layers, numLayers = getLayers(inFile)
-    ignore = np.zeros(numLayers)
+    ignore = np.zeros(len(Layers))
     for q,p in enumerate(Layers.values()):
         if "$" in p:
             ignore[q] = 1
-
+        elif "§" in p:
+            ignore[q] =1
     return ignore
 
 def getCpoints(inFile):
@@ -350,7 +356,9 @@ def getZvalues(inFile):
     zCoor = np.array([], dtype = float)    
     for i in range(len(names)):
         dig = []
-        if "$" in names[i]:
+        if "$"  in names[i]:
+            continue
+        if "§" in names[i]:
             continue
         if "p" in names[i]:
             dig = names[i].split("p")
