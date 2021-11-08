@@ -3,7 +3,7 @@
 This is the Julia and Python version of [geomIO](https://geomio.bitbucket.io), a free open source software to generate 3D volumes and surfaces from multiple 
 2D cross sections. These are provided as .stl files which can be used e.g. in a 3D printer, or as input to geodynamic codes.
 
-A detailed tutorial is currently WIP, as is the julia interface, but the run.py in the src directory can run and explain the code.
+This is currently work-in-progress and not intended to be used yet. The python version is more mature run.py in the /src directory can run and explain the code.
 
 
 ### Input ###
