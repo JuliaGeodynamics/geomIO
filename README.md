@@ -1,18 +1,18 @@
-# geomio4py - creating 3D meshes from 2D input #
+# geomIO - creating 3D geometries from 2D input #
 
-This is the Python version of geomIO, a free open source software to generate 3D volumes and surfaces from multiple 
-2D cross sections. These are provided as .stl files which can be used e.g in a 3D printer.
+This is the Julia and Python version of [geomIO](https://geomio.bitbucket.io), a free open source software to generate 3D volumes and surfaces from multiple 
+2D cross sections. These are provided as .stl files which can be used e.g. in a 3D printer, or as input to geodynamic codes.
 
-A detailed tutorial is currently WIP, but the run.py in the src directory can run and explain the code
+A detailed tutorial is currently WIP, as is the julia interface, but the run.py in the src directory can run and explain the code.
+
+
 ### Input ###
 
 Input is an .svg file generated with Inkscape. Currently only one structure can be handled per file.
 To generate a valid input file follow the following steps:
 
-- Add a layer qand rename it to a numerical value (representing the 3rd dimension coordinates)
-
-- Draw your structur with the Beziertool (Shift + F6)
-
+- Add a layer and rename it to a numerical value (representing the 3rd dimension coordinates)
+- Draw your structure with the Beziertool (Shift + F6)
 - Press F2 and select all nodes (ctrl +A), then press "Make selected nodes smooth" (top bar)
 - Go back to the layer menu (shift + ctrl + L) and duplicate your layer via rightclick
 - Rename the duplicated layer to another numerical value
