@@ -31,7 +31,7 @@ from scipy import interpolate
 #import stlWrite
 from pointcloud_delaunay import *
 import meshwrite as wr
-os.chdir("..")
+#os.chdir("..")
 
 
 
@@ -73,8 +73,8 @@ def getLayers(inFile):
         #print(i)#
         if i > 0:
             if compNum != initNum and "$" not in str(text[index[i]:index[i+1]])  :
-                print(initNum,compNum)
-                #sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
+                #print(initNum,compNum)
+                sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
         compNum = 0
         for p in range(index[i],index[i+1]):
             if "inkscape:label"  in text[p]:

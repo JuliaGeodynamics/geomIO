@@ -1,12 +1,20 @@
 import sys, os
-import geomio
-import svgpathtools
 
+
+x = os.getcwd()
+#sys.path.append('/../geomIO/src/python')
+os.chdir("..")
+os.chdir("src/python")
+
+
+import geomio
+os.chdir(x)
+#from geomIO.src.python import geomio
 #name of the inputfile
-inFile = "input/graben.svg"
+inFile = "input/over.svg"
 
 #name of the stl file which will be generated
-name = 'graben.stl'
+name = 'folds2.stl'
 
 #wether it is a closed volume or an open surface
 Volume = False
@@ -27,7 +35,7 @@ geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
 #l,nl = geomio.getLayers(inFile)
 
 #get the voundaries of the mesh/volume
-#geomio.getBounds(inFile, numInterLayers, nPrec)
+geomio.getBounds(inFile, numInterLayers, nPrec)
 
 
 
