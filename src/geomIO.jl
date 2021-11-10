@@ -1,5 +1,6 @@
 module geomIO
 
+ENV["PYTHON"]=""
 using PyCall
 
 # Load the required python packages (installs them in the local conda installation if required)
