@@ -5,6 +5,8 @@ Spyder Editor
 This is a temporary script file.
 """
 
+
+
 # import np as np
 # import sys, os
 
@@ -14,18 +16,20 @@ This is a temporary script file.
 # import math 
 
 
-
+# We need the following python packages for this to work:
+#
+# svgpathtools, numpy, matplotlib, math, sys, os, scipy
+# numpy-stl
 
 
 from svgpathtools import svg2paths, real, imag, Line
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.path import Path as Pt
 import matplotlib.patches as patches
 import math
 import sys,os
-import ipdb
+#import ipdb
 import scipy as sc
 from scipy import interpolate
 #import stlWrite
@@ -112,7 +116,7 @@ def scaling():
     
     
 def plot_line(inp, tol):
-    #depracated
+    #deprecated
     
     line = np.array(inp)#*tol
      

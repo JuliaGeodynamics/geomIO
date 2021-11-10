@@ -1,0 +1,7 @@
+name = "geomIO"
+uuid = "1698356d-72e0-4ca1-8773-07ef76f75400"
+authors = ["Lucas Moser <lumoser@students.uni-mainz.de>", "Tobias Baumann", "Boris Kaus <kaus@uni-mainz.de>"]
+version = "0.1.0"
+
+[deps]
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"

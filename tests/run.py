@@ -2,7 +2,7 @@ import sys, os
 
 
 x = os.getcwd()
-#sys.path.append('/../geomIO/src/python')
+sys.path.append('../src/python')
 os.chdir("..")
 os.chdir("src/python")
 
