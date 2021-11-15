@@ -4,16 +4,17 @@ ENV["PYTHON"]=""
 using PyCall, Conda
 
 # Load the required python packages (installs them in the local conda installation if required)
-Conda.add("svgpathtools", :my_env)
-Conda.add("numpy", :my_env)
-Conda.add("numpy-stl", :my_env)
-Conda.add("matplotlib", :my_env)
+chn="conda-forge"
+Conda.add("svgpathtools", :my_env, channel=chn)
+Conda.add("numpy", :my_env, channel=chn)
+Conda.add("numpy-stl", :my_env, channel=chn)
+Conda.add("matplotlib", :my_env, channel=chn)
 #Conda.add("math", :my_env)
 #Conda.add("sys", :my_env)
 #Conda.add("os", :my_env)
-Conda.add("scipy", :my_env)
-Conda.add("ipdb", :my_env)
-Conda.add("vtk", :my_env)
+Conda.add("scipy", :my_env, channel=chn)
+Conda.add("ipdb", :my_env, channel=chn)
+Conda.add("vtk", :my_env, channel=chn)
 
 #pyimport_conda("svgpathtools","svgpathtools")
 #pyimport_conda("numpy","numpy")
