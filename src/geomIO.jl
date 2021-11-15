@@ -28,6 +28,6 @@ Conda.add("vtk", :my_env, channel=chn)
 #pyimport_conda("vtk","vtk")
 
 pushfirst!(PyVector(pyimport("sys")."path"), "src/python")
-pygeomio = pyimport("geomio")
+pygeomio = pyimport("./src/geomio")
 
 end # module
