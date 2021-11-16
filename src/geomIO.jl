@@ -1,6 +1,10 @@
 module geomIO
 
+# Force using conda python installation
 ENV["PYTHON"]=""
+using Pkg
+Pkg.add("PyCall")
+
 using  Conda, PyCall
 export pygeomio
 
