@@ -1,8 +1,10 @@
 module geomIO
 
 ENV["PYTHON"]=""
-using PyCall, Conda
+using  Conda, PyCall
 export pygeomio
+
+@show PyCall.pyversion, PyCall.libpython, PyCall.conda
 
 const pygeomio = PyNULL()
 
