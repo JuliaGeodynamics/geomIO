@@ -1,0 +1,11 @@
+[conda]
+packages = ["python>=3.6","svgpathtools","numpy","numpy-stl","matplotlib","scipy","ipdb","vtk"]
+channels = ["conda-forge"]
+
+[pip]
+# packages = ["numpy>=1.21"]
+# indexes = [...]
+
+[script]
+# expr = "some_julia_expression()"
+# file = "/path/to/julia/script.jl"

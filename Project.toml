@@ -4,9 +4,8 @@ authors = ["Lucas Moser <lumoser@students.uni-mainz.de>", "Tobias Baumann", "Bor
 version = "0.1.0"
 
 [deps]
-Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 MeshIO = "7269a6da-0436-5bbc-96c2-40638cbb6118"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

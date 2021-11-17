@@ -4,7 +4,7 @@ using MeshIO, GeometryBasics    # STL in julia
 
 export save, load # load and save STL meshes
 
-export geomioFront, getBounds, getLayers, triSurfOpen
+export geomioFront, getBounds, getLayers, triSurfOpen, triSurfClose
 
 """
     geomioFront(inFile::String, outFile::String, numInterLayers::Int64, nPrec::Int64, Volume::Bool)
@@ -71,10 +71,46 @@ function triSurfOpen(inFile::String, numInterLayers::Int64, nPrec::Int64)
     
     # reconstruct the normals to the triangles
     lc          = pygeomio.getCarthesian(inFile,numInterLayers,nPrec)
-    normalspy   = pygeomio.triNormals(triangles, lc)
+    normals     = pygeomio.triNormals(triangles, lc)
     
     # Load points & vertexes
     points      = connect(lc,Point{3})
+
+    # Create stl surface     
+    tri = CreateSTL(triangles, points, normals)
+
+    return tri
+end
+
+"""
+    tri =  triSurfClose(inFile::String, numInterLayers::Int64, nPrec::Int64)
+
+Reads the SVG file `inFile` and reconstructs a triangular surface from it. The surface is closed.  
+The outpu `tri` is a triangular `stl` mesh, consistent with `MeshIO`.
+
+"""
+function  triSurfClose(inFile::String, numInterLayers::Int64, nPrec::Int64)
+
+    mesh, triangles = pygeomio.triSurfClose(inFile,numInterLayers,nPrec)
+    
+    # reconstruct the normals to the triangles
+    lc          = pygeomio.getCarthesian(inFile,numInterLayers,nPrec)
+    normals     = pygeomio.triNormals(triangles, lc)
+    
+    # Load points & vertexes
+    points      = connect(lc,Point{3})
+
+    # Create stl surface     
+    tri = CreateSTL(triangles, points, normals)
+
+    return tri
+end
+
+
+
+
+# Internal routine to create 
+function CreateSTL(triangles, points, normalspy)
 
     # Reinterpolate the mesh 
     triangle_count = size(triangles,1)
@@ -95,7 +131,6 @@ function triSurfOpen(inFile::String, numInterLayers::Int64, nPrec::Int64)
     end
 
     # Create triangular mesh (STL format)
-    tri  = Mesh(meta(vertices; normals=normals), faces)
+    return tri  = Mesh(meta(vertices; normals=normals), faces)
 
-    return tri
 end
