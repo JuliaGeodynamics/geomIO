@@ -1,9 +1,9 @@
 [conda]
-packages = ["python=3.6","svgpathtools","numpy=1.20","numpy-stl","matplotlib","scipy","ipdb","vtk"]
+packages = ["python=3.6","svgpathtools","numpy-stl","matplotlib","scipy","ipdb","vtk"]
 channels = ["conda-forge"]
 
 [pip]
-# packages = ["numpy>=1.21"]
+packages = ["numpy>=1.21"]
 # indexes = [...]
 
 [script]

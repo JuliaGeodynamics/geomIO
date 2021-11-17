@@ -4,7 +4,7 @@ using MeshIO, GeometryBasics    # STL in julia
 
 export save, load # load and save STL meshes
 
-export geomioFront, getBounds, getLayers, triSurfOpen, triSurfClose
+export geomioFront, getBounds, getLayers, triSurfOpen, triSurfClose, svg2paths
 
 """
     geomioFront(inFile::String, outFile::String, numInterLayers::Int64, nPrec::Int64, Volume::Bool)
@@ -107,7 +107,16 @@ function  triSurfClose(inFile::String, numInterLayers::Int64, nPrec::Int64)
     return tri
 end
 
+"""
+    paths, attributes = svg2paths(inFile::String) 
 
+Retrieves the `paths` and `atrributes` of the svg file.       
+"""
+function svg2paths(inFile::String)
+    paths, attributes = pygeomio.svg2paths(inFile)
+
+    return paths, attributes 
+end
 
 
 # Internal routine to create an STL surface from the python info
