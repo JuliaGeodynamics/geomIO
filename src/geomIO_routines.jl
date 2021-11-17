@@ -71,14 +71,14 @@ function triSurfOpen(inFile::String, numInterLayers::Int64, nPrec::Int64)
     mesh, triangles = pygeomio.triSurfOpen(inFile,numInterLayers,nPrec)
     
     # reconstruct the normals to the triangles
-    lc          = pygeomio.getCarthesian(inFile,numInterLayers,nPrec)
-    normals     = pygeomio.triNormals(triangles, lc)
+    lc          =   pygeomio.getCarthesian(inFile,numInterLayers,nPrec)
+    normals     =   pygeomio.triNormals(triangles, lc)
     
     # Load points & vertexes
-    points      = connect(lc,Point{3})
+    points      = connect(pyconvert(Array,lc),Point{3})
 
     # Create stl surface     
-    tri = CreateSTL(triangles, points, normals)
+    tri = CreateSTL(pyconvert(Array,triangles), points, pyconvert(Array,normals))
 
     return tri
 end
@@ -99,10 +99,10 @@ function  triSurfClose(inFile::String, numInterLayers::Int64, nPrec::Int64)
     normals     = pygeomio.triNormals(triangles, lc)
     
     # Load points & vertexes
-    points      = connect(lc,Point{3})
+    points      = connect(pyconvert(Array,lc),Point{3})
 
     # Create stl surface     
-    tri = CreateSTL(triangles, points, normals)
+    tri = CreateSTL(pyconvert(Array,triangles), points, pyconvert(Array,normals))
 
     return tri
 end
@@ -110,7 +110,7 @@ end
 
 
 
-# Internal routine to create 
+# Internal routine to create an STL surface from the python info
 function CreateSTL(triangles, points, normalspy)
 
     # Reinterpolate the mesh 
