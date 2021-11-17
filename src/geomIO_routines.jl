@@ -54,7 +54,8 @@ Returns the number of layers `nl` in the file as well as the path's per layer, `
 """
 function getLayers(inFile::String)
     l,nl = pygeomio.getLayers(inFile)
-    return l, nl
+
+    return l, pyconvert(Int64,nl)
 end
 
 
