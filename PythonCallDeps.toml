@@ -3,7 +3,7 @@ packages = ["python=3.6","svgpathtools","numpy-stl","matplotlib","scipy","ipdb",
 channels = ["conda-forge"]
 
 [pip]
-packages = ["numpy>=1.21"]
+packages = ["numpy"]
 # indexes = [...]
 
 [script]

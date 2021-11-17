@@ -25,4 +25,14 @@ tri = triSurfOpen(inFile, numInterLayers, nPrec)
 # Closed surface
 inFile          = "./input/volume.svg"
 tri     = triSurfClose(inFile, numInterLayers, nPrec)
-@show  tri[100][1][2] ≈ -156.21323f0
+@test  tri[100][1][2] ≈ -156.21323f0
+
+# Slab example
+inFile          = "./input/slab.svg"
+tri     = triSurfClose(inFile, numInterLayers, nPrec)
+@test  tri[100][1][2] ≈ -94.11989f0
+
+# Multilayer example
+#inFile          = "./input/multi.svg"
+#tri     = triSurfOpen(inFile, numInterLayers, nPrec)
+#@test  tri[100][1][2] ≈ -80.31044f0

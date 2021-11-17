@@ -63,7 +63,31 @@ end
     tri = triSurfOpen(inFile::String, numInterLayers::Int64, nPrec::Int64)
 
 Reads the SVG file `inFile` and reconstructs a triangular surface from it. The surface is *not* closed.  
-`tri` is a triangular `stl` mesh that is consistent with `MeshIO`
+`tri` is a triangular `stl` mesh that is consistent with `MeshIO`, and `FileIO`
+
+# Example
+=========
+```julia
+julia> using geomIO
+julia> inFile="./test/input/slab.svg"
+julia> numInterLayers, nPrec = 4,40
+julia> tri = triSurfOpen(inFile, numInterLayers, nPrec)
+Mesh{3, Float32, Triangle}:
+ Triangle(Float32[241.55135, -79.856834, -100.0], Float32[241.55135, -79.856834, -100.0], Float32[241.55135, -79.856834, -100.0])
+ Triangle(Float32[241.71376, -79.992004, 162.5], Float32[241.86136, -80.17122, 162.5], Float32[241.55135, -79.856834, 250.0])
+ Triangle(Float32[241.86136, -80.17122, 162.5], Float32[241.99454, -80.39218, 162.5], Float32[241.71376, -79.992004, 250.0])
+ Triangle(Float32[241.99454, -80.39218, 162.5], Float32[242.11372, -80.65258, 162.5], Float32[241.86136, -80.17122, 250.0])
+ Triangle(Float32[242.11372, -80.65258, 162.5], Float32[242.2193, -80.95012, 162.5], Float32[241.99454, -80.39218, 250.0])
+ ⋮
+ Triangle(Float32[237.53671, -78.19536, 31.25], Float32[239.08516, -78.67469, 31.25], Float32[239.08516, -78.67469, -100.0])
+ Triangle(Float32[239.08516, -78.67469, 31.25], Float32[240.4272, -79.22747, 31.25], Float32[240.4272, -79.22747, -100.0])
+ Triangle(Float32[240.4272, -79.22747, 31.25], Float32[241.55135, -79.856834, 31.25], Float32[241.55135, -79.856834, -100.0])
+ Triangle(Float32[241.55135, -79.856834, -100.0], Float32[241.55135, -79.856834, -100.0], Float32[241.55135, -79.856834, -100.0])
+```
+You can save this with:
+```julia
+julia> save("surf.stl",tri)
+```
 
 """
 function triSurfOpen(inFile::String, numInterLayers::Int64, nPrec::Int64)
@@ -87,7 +111,12 @@ end
     tri =  triSurfClose(inFile::String, numInterLayers::Int64, nPrec::Int64)
 
 Reads the SVG file `inFile` and reconstructs a triangular surface from it. The surface is closed.  
-The outpu `tri` is a triangular `stl` mesh, consistent with `MeshIO`.
+The output `tri` is a triangular `stl` mesh, consistent with `MeshIO`. 
+
+# Example
+```julia
+julia> 
+```
 
 """
 function  triSurfClose(inFile::String, numInterLayers::Int64, nPrec::Int64)
