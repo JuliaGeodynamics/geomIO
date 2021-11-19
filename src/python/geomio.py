@@ -21,8 +21,7 @@ This is a temporary script file.
 # svgpathtools, numpy, matplotlib, math, sys, os, scipy
 # numpy-stl
 
-
-from svgpathtools import svg2paths, real, imag, Line
+from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.path import Path as Pt
@@ -32,11 +31,13 @@ import sys,os
 #import ipdb
 import scipy as sc
 from scipy import interpolate
+
 #import stlWrite
 from pointcloud_delaunay import *
 import meshwrite as wr
-#os.chdir("..")
+from read_svg import *
 
+#os.chdir("..")
 
 
 #redo for naming layers
@@ -67,7 +68,7 @@ def getLayers(inFile):
     index.append(int(len(text)))
     #print(index )
     #Layers = list()
-    Layers = dict()        
+    Layers = dict()
     #print(index)
     initNum = 0
     compNum = 0
@@ -106,7 +107,6 @@ def getLayers(inFile):
                     pathSTR = pathSTR[1]
                     Layers[pathSTR] = layer
 
-    
         #Layers.append(Paths)
     return Layers, numLayers
 
@@ -281,7 +281,6 @@ def sortLayers(inFile):
 
 def ignore(inFile):
     
-    
     Layers, numLayers = getLayers(inFile)
     ignore = np.zeros(len(Layers))
     for q,p in enumerate(Layers.values()):
@@ -360,7 +359,7 @@ def getZvalues(inFile):
     zCoor = np.array([], dtype = float)    
     for i in range(len(names)):
         dig = []
-        if "$"  in names[i]:
+        if "$" in names[i]:
             continue
         if "§" in names[i]:
             continue
