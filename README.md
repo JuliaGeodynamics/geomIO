@@ -1,5 +1,7 @@
 # geomIO - creating 3D geometries from 2D input #
 
+![Build Status](https://github.com/JuliaGeodynamics/geomIO/workflows/CI/badge.svg)
+
 This is the Julia and Python version of [geomIO](https://geomio.bitbucket.io), a free open source software to generate 3D volumes and surfaces from multiple 
 2D cross sections. These are provided as .stl files which can be used e.g. in a 3D printer, or as input to geodynamic codes.
 
