@@ -1,7 +1,7 @@
 # This contains various routines to read *.SVG files, with multiple layers and multiple curves
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 
-def getLayers_Inkscape(inFile):
+def getLayers_General(inFile):
     """
     Parameters
     ----------
@@ -10,18 +10,23 @@ def getLayers_Inkscape(inFile):
 
     Returns
     -------
-    Layers : dict
-        Dictonary containing the information which path belongs to which layer.
-        If Layers represent geological ages then the first entry of the dict is 
-        the first layer created in Inkscape (and usually the oldest)
+    CurveNames : list with names of all curves found in the file (including on hidden layers)
+    LayerNames : list with layers on which the curves are
+    numLayers  : total number of layers
+    Commented  : Boolean list that indicates whether the layer is commented out
     """
 
     # Read the names of the layers in case we have an inkscape file 
     LayerLabels, isInkscape = getLayerLabels_Inkscape(inFile)
 
+    # Read all path's from file
+    paths, attributes = svg2paths(inFile)
+    
     # Initialize main output arrays
-    Layers = dict()
-    Commented = []
+    Layers = dict()     # It's not a good idea to use a dict for this, as we can have >1 curve per layer
+    LayerNames  = []
+    CurveNames  = []
+    Commented   = []
     
     # use svgpathtools to get the info from the file
     doc = Document(inFile)
@@ -33,7 +38,6 @@ def getLayers_Inkscape(inFile):
     group = doc.tree.getroot()
     
     numLayers= 0
-    name_attr='id'                  # Affinity Design uses this
     for elem in group.iterfind(SVG_GROUP_TAG, SVG_NAMESPACE):
         
         # 1) Extract name of layer.
@@ -58,15 +62,15 @@ def getLayers_Inkscape(inFile):
         # 2) Determine if it is a commented layer or not
         comment_layer = False
         if layer_str!=None:
-            if layer_str[0]=="#":
+            if (layer_str[0]=="#") | (layer_str[0]=="$"):
                 comment_layer = True
 
         # Print solution   
         if comment_layer:
-           # Commented[end+1]  = True
+            Commented.append(True)
             print("Commented layer : " + layer_str )
         else:
-           # Commented[end+1]  = False
+            Commented.append(False)
             print("Found layer     : " + layer_str )
             
         # 3) Extract names of curves on the current layer  
@@ -79,6 +83,8 @@ def getLayers_Inkscape(inFile):
                 curve_str =  path.get('label')
     
             # Store 
+            LayerNames.append(layer_str)
+            CurveNames.append(curve_str)
             Layers[layer_str] = curve_str    
             print("   Found PATH : " + curve_str)
                   
@@ -93,13 +99,15 @@ def getLayers_Inkscape(inFile):
                     curve_str =  elem1.get('label')
                 
                 # Store 
+                LayerNames.append(layer_str)
+                CurveNames.append(curve_str)
                 Layers[layer_str] = curve_str    
                 print("   Found PATH : " + curve_str)
           
 
     print("Finished looking for path ---")
 
-    return Layers, numLayers, Commented
+    return CurveNames, LayerNames, numLayers, Commented
 
 
 def getLayerLabels_Inkscape(inFile):
