@@ -13,14 +13,18 @@ def getLayers_Inkscape(inFile):
     Layers : dict
         Dictonary containing the information which path belongs to which layer.
         If Layers represent geological ages then the first entry of the dict is 
-        the first layer created in Inkscape(and usually the oldest)
+        the first layer created in Inkscape (and usually the oldest)
     """
 
+    # Read the names of the layers in case we have an inkscape file 
+    LayerLabels, isInkscape = getLayerLabels_Inkscape(inFile)
+
+    # Initialize main output arrays
+    Layers = dict()
+    Commented = []
+    
     # use svgpathtools to get the info from the file
     doc = Document(inFile)
-    #for owned in doc.tree.iter():
-         # print(str(owned))
-
 
     # Print names of layers:
     SVG_GROUP_TAG = 'svg:g'
@@ -28,24 +32,28 @@ def getLayers_Inkscape(inFile):
     SVG_NAMESPACE = {'svg': 'http://www.w3.org/2000/svg'}
     group = doc.tree.getroot()
     
+    numLayers= 0
     name_attr='id'                  # Affinity Design uses this
-    name_attr='inkscape:label'      # Inkscape uses this
     for elem in group.iterfind(SVG_GROUP_TAG, SVG_NAMESPACE):
         
         # 1) Extract name of layer.
         #    Note that Inkscape has a layer id, but the name you give it is stored under "inkscape:label" 
+        #       Unfortunately, there appears to be a bug in svgpathtools (or a package it relies on), and 
+        #       reading attributes that have an ":" in it does not work. 
+        #       As a workaround, we use getLayerLabels_Inkscape to get the name of the Layer
         if elem.get('id')!=None:
             layer_str =  elem.get('id')
+
+            if isInkscape:
+                # In case we have inkscape the name of the label is stored under inkscape:label
+                layer_str = LayerLabels.get(layer_str)
+                
+            numLayers += 1
         elif elem.get('label') != None:
             layer_str =  elem.get('label')
+            numLayers += 1
         else:
             layer_str = None
-        
-        # Note, for some reason it is not working with elem.get('inkscape:label')
-        #  Yet, if we do it with elem.get('inkscape_label') it works, so it appears a problm with ":"
-        layer_str1 =  elem.get('inkscape::label')
-        results = group.find_all('element_name')
-        print("layer_str1 : " + str(layer_str1 ) + str(results))
         
         # 2) Determine if it is a commented layer or not
         comment_layer = False
@@ -53,10 +61,12 @@ def getLayers_Inkscape(inFile):
             if layer_str[0]=="#":
                 comment_layer = True
 
-        # Print solution    
+        # Print solution   
         if comment_layer:
+           # Commented[end+1]  = True
             print("Commented layer : " + layer_str )
         else:
+           # Commented[end+1]  = False
             print("Found layer     : " + layer_str )
             
         # 3) Extract names of curves on the current layer  
@@ -67,8 +77,12 @@ def getLayers_Inkscape(inFile):
                 curve_str =  path.get('id')
             elif path.get('label') != None:
                 curve_str =  path.get('label')
+    
+            # Store 
+            Layers[layer_str] = curve_str    
             print("   Found PATH : " + curve_str)
-          
+                  
+                
         # in some cases, AffinityDesign puts another layer around the paths
         for elem1 in elem.iterfind(SVG_GROUP_TAG, SVG_NAMESPACE):
             for path2 in elem1.iterfind(SVG_PATH_TAG, SVG_NAMESPACE):
@@ -77,131 +91,72 @@ def getLayers_Inkscape(inFile):
                     curve_str =  elem1.get('id')
                 elif elem1.get('label') != None:
                     curve_str =  elem1.get('label')
+                
+                # Store 
+                Layers[layer_str] = curve_str    
                 print("   Found PATH : " + curve_str)
           
 
     print("Finished looking for path ---")
 
-    # Bug fix for inkscape
-    #  Since elem.get('inkscape:label') is not working, we parse the file by hand here 
-    f = open(inFile)
-    text = f.readlines()
-    index = []
-    numLayers = 0
+    return Layers, numLayers, Commented
 
+
+def getLayerLabels_Inkscape(inFile):
+    """
+    Parameters
+    ----------
+    inFile : Input svg File
+        The .svg file used (can be inkscape or another file)
+
+    Returns
+    -------
+    LayerLabels : dict
+        Dictonary containing the name of the layer as well as the internal ID of the layer in case we have an inkscape *.svg file 
+        If that is not the case the dict will be empty
+
+    isInkscape : Bool
+        Boolean that indicates if we have an inkscape SVG file or not    
+    """
+
+    LayerLabels = dict()  
+    isInkscape  = False      
+    
+    f       = open(inFile)
+    text    = f.readlines()
+    
     # Step 1: determine the # of layers in the file (with the lines)
+    index   = []
+    numLayers = 0
     for i in range(len(text)):
-        
         if "<g" in text[i]:     # start of a new layer
             numLayers += 1
             index.append(i)
-
     index.append(int(len(text)))
 
-
-
-    # This works with an Affinity Design object. 'result' contains all paths on that layer 
-    #result = doc.paths_from_group(pylist(["p0"]))
-
-    # This if 
-
-    x = doc.get_group(['0'])
-    print("x="+str(x))
-
-    
-    #for path in doc.g():
-    #    print("path in doc reads: "+str(path))
-
-
-    f = open(inFile)
-    text = f.readlines()
-    index = []
-    numLayers = 0
-
-    # Step 1: determine the # of layers in the file (with the lines)
-    for i in range(len(text)):
-        
-        if "<g" in text[i]:     # start of a new layer
-            numLayers += 1
-            index.append(i)
-            
-    index.append(int(len(text)))
-    #print(index )
-    #Layers = list()
-    Layers = dict()
-    Labels = dict()        
-    print(index)
-    initNum = 0
-    compNum = 0
-    
     #Step 2: Loop through each layer and extract curves that are present in the layer
-    for i in range(len(index)-1):
-        print(i)
-        # if i > 0:
-        #     if compNum != initNum and "$" not in str(text[index[i]:index[i+1]])  :
-        #         #print(initNum,compNum)
-        #         sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
-        #         compNum = 0
-        # print("new line ---")
-        ReadLayer = True
-        labelSTR=""
-        p = index[i]
-        while (p<=index[i+1]):                  # loop over line-numbers of the current layer
-        #for p in range(index[i],index[i+1]):    # loop over line-numbers 
+    for iLayer in range(len(index)-1):
+        layerLabel = None
+        layerName  = None
+        foundID    = False
+        p = index[iLayer]
+        for p in range(index[iLayer],index[iLayer+1]):    # loop over line-numbers of current layer
             
-            # In inkscape, the name of the layer is indicated with "inkscape:layer" 
-            if "inkscape:label"  in text[p]:
+            # The label of the layer is indicated with "inkscape:layer" 
+            if "inkscape:label=\""  in text[p]:
                 layerSTR = text[p]
-                #print(layerSTR)
                 layerSTR = layerSTR.split("\"")
-                layer = layerSTR[1]                 # name of layer
-                if ((layer[0] == "#") | (layer[0] == "$")):
-                    print("Commented Layer: "+layer)
-                    ReadLayer = False             # the layer is commented out; no need to read the
-                elif (layer == "Reference"):
-                    print("Reference Layer: "+layer)      
-                else:
-                    print("Interpreting Layer: "+layer)
-            else:
-                layerSTR = "Layer" + str(p)         # Fallback in case no layer is found (not sure this is needed in )
-            
-            
-            # Curves with a layer are indicated with <path  ...  />
-            # 
-            #         
-            if "<path" in text[p]:  
-                 while "\>" not in text[p]:  
-                     p = p+1
-                 print("Interpreting curve:" + text[p])
-                 
+                layerLabel = layerSTR[1]                 # Label of layer
 
-
-            p = p+1        
+            # Retrieve the ID of the layer. This is always specified before curves/paths, which is why we only read the 1th ID of a layer
+            if ("id=\""  in text[p]) & (foundID==False):
+                layerSTR = text[p]
+                layerSTR = layerSTR.split("\"")
+                layerName = layerSTR[1]                 # ID of layer
+                foundID = True
                 
+        if (layerName!=None) & (layerLabel!=None):
+            LayerLabels[layerName] = layerLabel
+            isInkscape = True
 
-            #if "id=\"path"  in text[p]:
-            #    print(text[p])
-            #    if i == 0:
-            #        initNum += 1
-            #        compNum +=1
-            #        pathSTR = text[p]
-            #        pathSTR = pathSTR.split("\"")
-            #        pathSTR = pathSTR[1]
-            #        Layers[pathSTR] = layer
-            #        Labels[pathSTR] = labelSTR
-            #    else:                    
-            #        compNum +=1
-            #        #print (compNum)
-            #        pathSTR = text[p]
-            ##        pathSTR = pathSTR.split("\"")
-            #        pathSTR = pathSTR[1]
-            #        #print(text)
-            #        Layers[pathSTR] = layer
-
-        #print(pathSTR)
-        print(labelSTR)     #
-        #Layers.append(Paths)
-    return Layers, numLayers
-
-
-
+    return LayerLabels, isInkscape
