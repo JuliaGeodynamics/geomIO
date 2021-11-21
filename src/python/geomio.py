@@ -229,8 +229,6 @@ def controlPoints(line):
 
     """
     cPoints = list()
-
-    
     for i in range(len(line)):
         
         points = line._segments[i]
@@ -249,7 +247,7 @@ def controlPoints(line):
     return cPoints
 
 
-def sortLayers(inFile):
+def sortLayers(inFile): # Obsolete
     """
     This function checks where are to little or to much segments 
     if there are not equal number of paths(or segments) per layer    
@@ -279,7 +277,7 @@ def sortLayers(inFile):
             c +=1      
     return 
 
-def ignore(inFile):
+def ignore(inFile): # Obsolete
     
     Layers, numLayers = getLayers(inFile)
     ignore = np.zeros(len(Layers))
@@ -337,7 +335,7 @@ def makeBezier(cPoints):
         
     return Points
 
-def getZvalues(inFile):
+def getZvalues(inFile):  # obsolete
     """
     this function reads the Z-coordinate values passed with the individual 
     layernames
@@ -390,6 +388,7 @@ def getZvalues(inFile):
 
     return zCoor
 #Interp1D not necessary
+
 
 def interZlayers(zCoor,numLayers):
     """
@@ -459,8 +458,7 @@ def interp(cPoints, zCoor, numPoints = 5, meth = 'linear'):
     # Inter = Inter/numPoints
     # zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numPoints)
     zValues = interZlayers(zCoor,numPoints)
-
-            
+       
     #print(zValues)
     for d in range(len(zValues)):
         if d ==0 :
@@ -525,9 +523,6 @@ def interp(cPoints, zCoor, numPoints = 5, meth = 'linear'):
 
     return Segment 
     
-
-    
-
     
 def interWrap(inFile, numInterLayers):
     """
@@ -568,17 +563,12 @@ def interWrap(inFile, numInterLayers):
         if idx[i] == 1:
             #print("c")
             cPoints.insert(i, reshape[count])
-            count +=1
-            
+            count +=1       
         
     return cPoints, vals   
 
     
   
-
-        
-
-
 
 def deCastel(cPoints, t = 0.5):
     """

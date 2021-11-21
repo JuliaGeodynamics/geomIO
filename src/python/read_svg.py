@@ -1,5 +1,15 @@
 # This contains various routines to read *.SVG files, with multiple layers and multiple curves
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
+from typing import NamedTuple
+ 
+class svgFileData(NamedTuple):
+    CurveNames: list
+    Curves    : list
+    LayerNames: list
+    numLayers:  int
+    Commented:  list
+    zCoord:     list
+
 
 def getLayers_General(inFile, Verbose=True):
     """
@@ -14,11 +24,15 @@ def getLayers_General(inFile, Verbose=True):
 
     Returns
     -------
-    CurveNames  : List with names of all curves found in the file (including on hidden layers)
-    Curves      : List with curve paths of all curves found in file
-    LayerNames  : List with layers on which the curves are
-    numLayers   : Total number of layers
-    Commented   : Boolean list that indicates whether the layer is commented out
+    Data        : Names Tuple with following fields: 
+        CurveNames  : List with names of all curves found in the file (including on hidden layers)
+        Curves      : List with curve paths of all curves found in file
+        LayerNames  : List with layers on which the curves are
+        numLayers   : Total number of layers
+        Commented   : Boolean list that indicates whether the layer is commented out
+        zCoord      : List with z-coordinates
+
+    Note: all lists are sorted according to the z-coordinates (starting with the lowest value)   
     """
 
     # Read the names of the layers in case we have an inkscape file 
@@ -28,7 +42,6 @@ def getLayers_General(inFile, Verbose=True):
     paths, attributes = svg2paths(inFile)
     
     # Initialize main output arrays
-    Layers = dict()     # It's not a good idea to use a dict for this, as we can have >1 curve per layer
     LayerNames  = []
     CurveNames  = []
     Commented   = []
@@ -70,7 +83,6 @@ def getLayers_General(inFile, Verbose=True):
         if layer_str!=None:
             if (layer_str[0]=="#") | (layer_str[0]=="$"):
                 comment_layer = True
-        Commented.append(comment_layer)
 
         # Print solution if requested
         if Verbose:    
@@ -92,6 +104,7 @@ def getLayers_General(inFile, Verbose=True):
             LayerNames.append(layer_str)
             CurveNames.append(curve_str)
             Curves.append(paths[CurveNumber])
+            Commented.append(comment_layer)
             CurveNumber += 1
             if Verbose:
                 print("   Found PATH   : " + curve_str)
@@ -110,6 +123,7 @@ def getLayers_General(inFile, Verbose=True):
                 LayerNames.append(layer_str)
                 CurveNames.append(curve_str)
                 Curves.append(paths[CurveNumber])
+                Commented.append(comment_layer)
                 CurveNumber += 1
                 if Verbose:
                     print("   Found PATH   : " + curve_str)
@@ -117,7 +131,23 @@ def getLayers_General(inFile, Verbose=True):
     if Verbose:
         print("Finished interpreting file : " + inFile + " --- ")
 
-    return CurveNames, Curves, LayerNames, numLayers, Commented
+    # Read Reference layer & determine scaling if it exists
+
+    # Interpret zLayers
+    zCoord, sort_ind = get_zCoords(LayerNames, Commented)
+
+    # Sort other lists accordingly, so it is all from lowest->highest coordinate 
+    #  (with commented & reference layers listed afterwards)
+    CurveNames_sort =   [CurveNames[i]  for i in sort_ind]
+    Curves_sort     =   [Curves[i]      for i in sort_ind]
+    LayerNames_sort =   [LayerNames[i]  for i in sort_ind]
+    Commented_sort  =   [Commented[i]   for i in sort_ind]
+    zCoord_sort     =   [zCoord[i]      for i in sort_ind]
+
+    # Store data in Named Tuple (easier to handle later)
+    Data = svgFileData(CurveNames_sort, Curves_sort, LayerNames_sort, numLayers, Commented_sort, zCoord_sort)
+
+    return Data
 
 
 def getLayerLabels_Inkscape(inFile):
@@ -178,3 +208,81 @@ def getLayerLabels_Inkscape(inFile):
             isInkscape = True
 
     return LayerLabels, isInkscape
+
+
+def get_zCoords(LayerNames, Commented):
+    """
+    Parameters
+    ----------
+    LayerNames  :   list
+        Names of all the layers
+    Commented   :   list
+        Indicates whether the layer is commented or not   
+
+    Returns
+    -------
+    zCoords : list
+        List of z-values 
+    """
+    
+    zCoord = []
+    for i in range(len(LayerNames)-1):
+     #   print(LayerNames[i] +"  "+ str(i))
+        if (Commented[i]==True) :
+            zCoord.append(None)    
+
+        elif (LayerNames[i]=="Reference"):
+            zCoord.append(None)    
+
+        elif (LayerNames[i][0]=="p"):
+            number = float(LayerNames[i][1:len(LayerNames[i])])
+            zCoord.append(number) 
+
+        elif (LayerNames[i][0]=="m"):
+            number = -float(LayerNames[i][1:len(LayerNames[i])])
+            zCoord.append(number) 
+            
+        else:
+            try:    # try converting LayerName to float
+                number = float(LayerNames[i])
+            except: # set to 0 otherwise
+                number = 0.0
+            zCoord.append(number)     
+            
+    
+    # Optional: sort the list with zCoord values from lowest->highest & compute indices     
+    li=[]
+    for i in range(len(zCoord)):
+        if zCoord[i]==None:
+            li.append([1e25,i])
+        else:
+            li.append([zCoord[i],i])
+    li.sort()
+
+    sort_ind    =   [x[1] for x in li]
+    
+    return zCoord, sort_ind
+
+
+def get_CurveNames(Data):
+    """
+    Parameters
+    ----------
+    Data  :   svgFileData structure 
+
+    Returns
+    -------
+    UniqueCurveNames : List with unique Curve Names on "real" layers
+    """
+
+    Commented   =   Data[4]  
+    Curves      =   Data[0]
+    LayerNames  =   Data[2]
+    CurveNames  =   []
+    for i in range(len(Curves)):
+        if (Commented[i]==False) & (LayerNames[i]!="Reference"):
+            CurveNames.append(Curves[i])     
+    
+    CurveNamesUnique = set(CurveNames)
+    
+    return CurveNamesUnique
