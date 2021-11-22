@@ -256,7 +256,8 @@ def get_zCoords(LayerNames, Commented):
     """
     
     zCoord = []
-    for i in range(len(LayerNames)-1):
+    #for i in range(len(LayerNames)-1): leads to the last path beiing excluded
+    for i in range(len(LayerNames)):
      #   print(LayerNames[i] +"  "+ str(i))
         if (Commented[i]==True) :
             zCoord.append(None)    
