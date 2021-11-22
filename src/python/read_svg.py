@@ -365,3 +365,75 @@ def get_Scaling(CurveNames, Curves, LayerNames):
             Scaling_data    =   Scaling(x0,y0,x0_SVG,y0_SVG,dx,dy)              
 
     return Scaling_data
+
+
+
+
+#redo for naming layers
+def getLayers(inFile):  # can later be largely replaced by readSVG
+    """
+    Parameters
+    ----------
+    inFile : Input svg File
+        The .svg file used. Warning: must be Inkscape SVG
+
+    Returns
+    -------
+    Layers : dict
+        Dictonary containing the information which path belongs to which layer.
+        If Layers represent geological ages then the first entry of the dict is 
+        the first layer created in Inkscape(and usually the oldest)
+    """
+    f = open(inFile)
+    text = f.readlines()
+    index = []
+    numLayers = 0
+    for i in range(len(text)):
+        if "<g" in text[i]:
+            numLayers += 1
+            index.append(i)
+            
+    index.append(int(len(text)))
+    #print(index )
+    #Layers = list()
+    Layers = dict()
+    #print(index)
+    initNum = 0
+    compNum = 0
+    
+    #-------------BUG!!!------------------
+    for i in range(len(index)-1):
+        #print(i)#
+        if i > 0:
+            if compNum != initNum and "$" not in str(text[index[i]:index[i+1]])  :
+                #print(initNum,compNum)
+                sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
+        compNum = 0
+        for p in range(index[i],index[i+1]):
+            if "inkscape:label"  in text[p]:
+                layerSTR = text[p]
+                layerSTR = layerSTR.split("\"")
+                #print(layerSTR)
+                layer = layerSTR[1]
+                #print(layer)
+            else:
+                layerSTR = "Layer" + str(p)
+            if "id=\"path"  in text[p]:
+                
+                if i == 0:
+                    initNum += 1
+                    compNum +=1
+                    pathSTR = text[p]
+                    pathSTR = pathSTR.split("\"")
+                    pathSTR = pathSTR[1]
+                    Layers[pathSTR] = layer
+                else:                    
+                    compNum +=1
+                    #print (compNum)
+                    pathSTR = text[p]
+                    pathSTR = pathSTR.split("\"")
+                    pathSTR = pathSTR[1]
+                    Layers[pathSTR] = layer
+
+        #Layers.append(Paths)
+    return Layers, numLayers
