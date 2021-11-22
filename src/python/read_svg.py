@@ -2,6 +2,15 @@
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 from typing import NamedTuple
  
+
+class Scaling(NamedTuple):
+    x0          : float
+    y0          : float
+    x0_SVG      : float
+    y0_SVG      : float
+    dx          : float
+    dy          : float
+
 class svgFileData(NamedTuple):
     CurveNames: list
     Curves    : list
@@ -9,11 +18,13 @@ class svgFileData(NamedTuple):
     numLayers:  int
     Commented:  list
     zCoord:     list
-
-
-def getLayers_General(inFile, Verbose=True):
+    Scaling:    Scaling
+   
+def readSVG(inFile, Verbose=True):
     """
-    Reads an SVG file and returns all curves, layers and names (plus whether a layer is commented or not) 
+    Reads an SVG file and returns all curves, layers and names (plus whether a layer is commented or not).
+    The resulting layers/curves are sorted by depth and a scaling object is returned if a Reference layer was 
+    present in the SVG file
     Has been tested for Inkscape & Affinity Design generated files.
 
     Parameters
@@ -81,7 +92,7 @@ def getLayers_General(inFile, Verbose=True):
         # 2) Determine if it is a commented layer or not
         comment_layer = False
         if layer_str!=None:
-            if (layer_str[0]=="#") | (layer_str[0]=="$"):
+            if (layer_str[0]=="#") | (layer_str[0]=="$") | (layer_str=="Reference"):
                 comment_layer = True
 
         # Print solution if requested
@@ -94,12 +105,22 @@ def getLayers_General(inFile, Verbose=True):
         # 3) Extract names of curves on the current layer  
         # if a curve is directly on this layer, you can find it like this
         for path in elem.iterfind(SVG_PATH_TAG, SVG_NAMESPACE):
+
             curve_str = None
             if path.get('id')!=None:
                 curve_str =  path.get('id')
-            elif path.get('label') != None:
+
+            if path.get('label') != None:
                 curve_str =  path.get('label')
-    
+            
+            if path.get('CoordRef') != None:    # in Inkscape we can specify CoordRef on a curve (not possible in AffinityDesign where we can only set id)
+                curve_str =  "CoordRef_"+str(path.get('CoordRef'))
+            
+            # work-around for bug that doesn't find path.get('serif:id')
+            lbl = attributes[CurveNumber].get('serif:id')
+            if lbl != None:
+                curve_str =  lbl
+            
             # Store 
             LayerNames.append(layer_str)
             CurveNames.append(curve_str)
@@ -108,17 +129,24 @@ def getLayers_General(inFile, Verbose=True):
             CurveNumber += 1
             if Verbose:
                 print("   Found PATH   : " + curve_str)
-                  
                 
         # in some cases, Affinity Design puts another layer around the paths, so we check that as well here
         for elem1 in elem.iterfind(SVG_GROUP_TAG, SVG_NAMESPACE):
             for path2 in elem1.iterfind(SVG_PATH_TAG, SVG_NAMESPACE):
+                att = attributes[CurveNumber]   #
+                lbl = att.get('serif:id')
+                
                 curve_str = None
                 if elem1.get('id')!=None:
                     curve_str =  elem1.get('id')
-                elif elem1.get('label') != None:
+                
+                if elem1.get('label') != None:
                     curve_str =  elem1.get('label')
                 
+                lbl = attributes[CurveNumber].get('serif:id')
+                if lbl != None:
+                    curve_str =  lbl
+
                 # Store info
                 LayerNames.append(layer_str)
                 CurveNames.append(curve_str)
@@ -127,14 +155,16 @@ def getLayers_General(inFile, Verbose=True):
                 CurveNumber += 1
                 if Verbose:
                     print("   Found PATH   : " + curve_str)
-          
+        
     if Verbose:
         print("Finished interpreting file : " + inFile + " --- ")
 
-    # Read Reference layer & determine scaling if it exists
 
     # Interpret zLayers
     zCoord, sort_ind = get_zCoords(LayerNames, Commented)
+
+    # Read Reference layer & determine scaling if it exist
+    Scaling = get_Scaling(CurveNames, Curves, LayerNames)
 
     # Sort other lists accordingly, so it is all from lowest->highest coordinate 
     #  (with commented & reference layers listed afterwards)
@@ -145,7 +175,7 @@ def getLayers_General(inFile, Verbose=True):
     zCoord_sort     =   [zCoord[i]      for i in sort_ind]
 
     # Store data in Named Tuple (easier to handle later)
-    Data = svgFileData(CurveNames_sort, Curves_sort, LayerNames_sort, numLayers, Commented_sort, zCoord_sort)
+    Data = svgFileData(CurveNames_sort, Curves_sort, LayerNames_sort, numLayers, Commented_sort, zCoord_sort, Scaling)
 
     return Data
 
@@ -286,3 +316,52 @@ def get_CurveNames(Data):
     CurveNamesUnique = set(CurveNames)
     
     return CurveNamesUnique
+
+
+
+def get_Scaling(CurveNames, Curves, LayerNames):
+    """
+    Parameters
+    ----------
+    CurveNames  :   List with names of the curves
+    Curves      :   Path info about the curves
+    LayerNames  :   List with names of the layers on which the curves are
+    
+
+    Returns
+    -------
+    Scaling_data :  Scaling Named Tuple with scaling info: 
+                    x0,         y0,       # lower left corner in real world coordinates
+                    x0_SVG,     y0_SVG,   # lower left corner in SVG coordinates
+                    dx,         dy        # spacing to go from SVG -> real world coordinates
+                     
+                    # x_real = (x_inkscape - x0_SVG)*dx + x0
+                    # y_real = (y_inkscape - y0_SVG)*dy + y0
+
+    """
+    
+    Scaling_data    =   Scaling(None,None,None,None,None,None)     
+    for i in range(len(Curves)):
+        if (LayerNames[i]=="Reference"):
+            print(LayerNames[i])
+            # A reference layer is present: 
+            #   interpret the name of the curve to extract "real world" 
+            #   x/y coordinates of begin & end-points
+            CoordRef_str    =   CurveNames[i][10:len(CurveNames[i])-1]
+            CoordRef_list   =   CoordRef_str.split(",")
+            CoordRef        =   list(map(float, CoordRef_list))
+            x0              =   CoordRef[0]
+            y0              =   CoordRef[1]
+            
+            # Retrieve the bounding box of the reference curve
+            curve           =   Curves[i]
+            x0_SVG,x1_SVG,y0_SVG,y1_SVG =   curve.bbox()
+
+            # Compute scaling 
+            dx              =   (CoordRef[2]- CoordRef[0])/(x1_SVG - x0_SVG)
+            dy              =   (CoordRef[3]- CoordRef[1])/(y1_SVG - y0_SVG)
+
+            # Store scaling data in NamedTuple:
+            Scaling_data    =   Scaling(x0,y0,x0_SVG,y0_SVG,dx,dy)              
+
+    return Scaling_data
