@@ -1,19 +1,80 @@
-from svgpathtools import svg2paths
-from read_svg import getLayers
 import numpy as np
-from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 from scipy import interpolate
-
-from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.path import Path as Pt
-import matplotlib.patches as patches
+from svgpathtools import svg2paths, real, imag, Line
 import math
 import sys,os
-#import ipdb
-import scipy as sc
 
+
+
+# redo for naming layers
+def getLayers(inFile):  # can later be largely replaced by readSVG
+    """
+    Parameters
+    ----------
+    inFile : Input svg File
+        The .svg file used. Warning: must be Inkscape SVG
+
+    Returns
+    -------
+    Layers : dict
+        Dictonary containing the information which path belongs to which layer.
+        If Layers represent geological ages then the first entry of the dict is 
+        the first layer created in Inkscape(and usually the oldest)
+    """
+    f = open(inFile)
+    text = f.readlines()
+    index = []
+    numLayers = 0
+    for i in range(len(text)):
+        if "<g" in text[i]:
+            numLayers += 1
+            index.append(i)
+            
+    index.append(int(len(text)))
+    #print(index )
+    #Layers = list()
+    Layers = dict()
+    #print(index)
+    initNum = 0
+    compNum = 0
+    
+    #-------------BUG!!!------------------
+    for i in range(len(index)-1):
+        #print(i)#
+        if i > 0:
+            if compNum != initNum and "$" not in str(text[index[i]:index[i+1]])  :
+                #print(initNum,compNum)
+                sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
+        compNum = 0
+        for p in range(index[i],index[i+1]):
+            if "inkscape:label"  in text[p]:
+                layerSTR = text[p]
+                layerSTR = layerSTR.split("\"")
+                #print(layerSTR)
+                layer = layerSTR[1]
+                #print(layer)
+            else:
+                layerSTR = "Layer" + str(p)
+            if "id=\"path"  in text[p]:
+                
+                if i == 0:
+                    initNum += 1
+                    compNum +=1
+                    pathSTR = text[p]
+                    pathSTR = pathSTR.split("\"")
+                    pathSTR = pathSTR[1]
+                    Layers[pathSTR] = layer
+                else:                    
+                    compNum +=1
+                    #print (compNum)
+                    pathSTR = text[p]
+                    pathSTR = pathSTR.split("\"")
+                    pathSTR = pathSTR[1]
+                    Layers[pathSTR] = layer
+
+        #Layers.append(Paths)
+    return Layers, numLayers
+    
 def getZvalues(inFile):  # obsolete
     """
     this function reads the Z-coordinate values passed with the individual 
@@ -181,6 +242,7 @@ def interZlayers(zCoor,numLayers):
     """
     #print(zCoor)
     Inter = zCoor[-1]- zCoor[0]
+
     #print(Inter)
     Inter = Inter/numLayers
     zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numLayers, False)
@@ -198,12 +260,14 @@ def compEmpty(zCoor, numLayers):
     vals = np.sort(zCoor)
     vals = np.flip(vals)
     #print(vals)
+    zAdded = []
     idx = np.zeros(len(vals))
     for i in range(len(idx)):
         if vals[i] in zValues and vals[i] != vals[i-1]:
             idx[i] = 1
-            
-    return idx, vals
+            zAdded.append(vals[i])
+
+    return idx, vals, zAdded
 #write getcoords
 #wrpng starting points, need to loop over starting points
 
@@ -263,7 +327,7 @@ def interp(cPoints, zCoor, numPoints = 5, meth = 'linear'):
         c2[i,1] = cPoints[i].c2[1]
         end[i,0] = cPoints[i].end[0]
         end[i,1] = cPoints[i].end[1]
-    #print(start[:,0])
+   
 
 
     # sX = np.linspace(start[0,0], start[-1,0], numPoints)
@@ -271,7 +335,7 @@ def interp(cPoints, zCoor, numPoints = 5, meth = 'linear'):
     # c2X = np.linspace(c2[0,0], c2[-1,0], numPoints)
     # endX =  np.linspace(end[0,0], end[-1,0], numPoints)
 
-    #interpolation for X
+    # Create interpolation functions for X
     startX = interpolate.interp1d(zCoor, start[:,0], meth)
     c1X = interpolate.interp1d(zCoor, c1[:,0],meth)    
     c2X = interpolate.interp1d(zCoor, c2[:,0],meth)
@@ -282,6 +346,11 @@ def interp(cPoints, zCoor, numPoints = 5, meth = 'linear'):
     c1Y = interpolate.interp1d(zCoor, c1[:,1],meth)    
     c2Y = interpolate.interp1d(zCoor, c2[:,1],meth)
     endY = interpolate.interp1d(zCoor, end[:,1],meth)
+    
+    print("start    = "+str(start[:,0]))
+    print("zValues  = "+str(zValues))
+    print("zCoor    = "+str(zCoor))
+    
     
     #print(c1X(zValues))
     VolumeX = np.array([startX(zValues),c1X(zValues),
@@ -315,8 +384,7 @@ def interWrap(inFile, numInterLayers):
     
     """
     zCoor = getZvalues(inFile)
-    
-    idx, vals = compEmpty(zCoor, numInterLayers)
+    idx, vals, zAdded = compEmpty(zCoor, numInterLayers)
 
     cPoints = getCpoints(inFile)
     interLayers= list()
@@ -391,11 +459,9 @@ def getCarthesian(inFile, numInterLayers, prec):
     """
     cPoints, vals = interWrap(inFile, numInterLayers)
 
-    #print(cPoints)
     t = np.linspace(0,1, prec)
     carthCoors = list()
     LayerCoors = np.array([])
-    #print(len(vals))
     for r in range(len(vals)):
         
         for p in range(len(cPoints[0])):
@@ -438,4 +504,13 @@ def Dim(cPoints, nLayers = 15):
 
         adLayers.append(newbez)
     return  adLayers
+
+def ApplyScaling(points, Scaling):
+    """
+        Apply scaling to curve described in points if the scaling object is non empty
+    """
+
+
+
+    return points
 

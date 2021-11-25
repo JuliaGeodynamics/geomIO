@@ -1,15 +1,11 @@
 
 from curve_interpolations import *
-from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
+from read_svg import readSVG, get_CurveNames
+#from geomio import getLayers
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.path import Path as Pt
-import matplotlib.patches as patches
 import math
 import sys,os
-#import ipdb
 import scipy as sc
-from scipy import interpolate
 
 
 def triNormals(tri,lc):
@@ -34,6 +30,10 @@ def triSurfOpen(inFile, nInter, nPrec):
     Layers, numLayers = getLayers(inFile)
     lc = getCarthesian(inFile,nInter,nPrec)
 
+    mesh1, triangles, normals = triSurfOpen_Compute(lc, nInter, numLayers)
+    return mesh1, triangles
+
+def triSurfOpen_Compute(lc, nInter, numLayers):
     nQuads = nInter+numLayers -1
     tri1 = np.array([])
     tri2 = np.array([])
@@ -93,11 +93,9 @@ def triSurfOpen(inFile, nInter, nPrec):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
-    np.save("surf",mesh1)
+    #np.save("surf",mesh1)
 
-    
-    
-    return mesh1, triangles
+    return mesh1, triangles, normals
 
 from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
     
@@ -196,6 +194,13 @@ def triSurfClose(inFile, nInter, nPrec):
     Layers, numLayers = getLayers(inFile)
     lc = getCarthesian(inFile,nInter,nPrec)
 
+    mesh1, triangles, normals = triSurfClose_Compute(lc, nInter, numLayers)
+    
+    return mesh1, triangles
+
+
+def triSurfClose_Compute(lc, nInter, numLayers):
+
     nQuads = nInter+numLayers -1
     tri1 = np.array([])
     tri2 = np.array([])
@@ -222,6 +227,7 @@ def triSurfClose(inFile, nInter, nPrec):
     cTL += LLI
     #coordinatses of both covers
     cover = np.concatenate((cCF,cCL))
+    
     #index of the triangles in lc
     covTri = np.concatenate((cTF,cTL))
 
@@ -285,54 +291,11 @@ def triSurfClose(inFile, nInter, nPrec):
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
     mesh1 = np.concatenate((mesh1,cover))
     triangles = np.concatenate((triangles,covTri))
-    #for d in range(2):
-    # mesh1 = np.concatenate((mesh1,mesh2))
-    # mesh1 = np.concatenate((mesh1,mesh3))
 
-    # triangles = np.concatenate((triangles,triCov1))
-    # faceLast = triCov2+LLI
-    # triangles = np.concatenate((triangles,faceLast))        
-    
-    #return cover, covTri
-    return mesh1, triangles
-
-# inFile = 'input/slab.svg'
-
-# mesh1, tri = triSurfClose(inFile, 5,20)
+    return mesh1, triangles, normals
 
 
 
-
-
-def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "a"):
-    """
-    placeholder function for writing stl files
-    uses the lib np stl
-    """
-    
-    import struct
-    import stl
-    from stl import mesh
-    if volume:
-        triangles, face = triSurfClose(inFile,numInter,nPrec)
-    else:
-            
-        triangles, face = triSurfOpen(inFile,numInter,nPrec)
-    lc = getCarthesian(inFile, numInter,nPrec)
-    os.chdir("output")
-    cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
-    for i, f in enumerate(face):
-        for j in range(3):
-            cube.vectors[i][j] = lc[f[j],:]
-    
-    #Write the mesh to file "cube.stl"
-    if mode == "a":
-        
-        cube.save(str(name),mode=stl.Mode.ASCII )
-    elif mode == "b":
-        cube.save(str(name),mode=stl.Mode.BINARY )
-    os.chdir("..")
-    return
 
 
 def wMulti(inFile, numInter, nPrec, names, volume):

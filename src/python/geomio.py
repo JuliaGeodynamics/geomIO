@@ -21,81 +21,181 @@ This is a temporary script file.
 # svgpathtools, numpy, matplotlib, math, sys, os, scipy
 # numpy-stl
 
-from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
+from svgpathtools import svg2paths, real, imag
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.path import Path as Pt
 import matplotlib.patches as patches
-import math
-import sys,os
-#import ipdb
-import scipy as sc
-from scipy import interpolate
+import sys
 
-#import stlWrite
 from pointcloud_delaunay import *
 import meshwrite as wr
 from read_svg import *
 from curve_interpolations import *
 from create_STL_surface import *
-
+from typing import NamedTuple
+from stl import mesh
 #os.chdir("..")
 
 
 
-def scaling():
-    return
-    
-    
-    
-def plot_line(inp, tol):    # Obsolete?
-    #deprecated
-    
-    line = np.array(inp)#*tol
-     
-    #plt.plot(line[:, 0], line[:, 1], color='b')
-    
-    plt.scatter(line[:, 0], line[:, 1], s=5)
 
-
-
-
-def checkPath(attributes, Layers):  # Obsolete?
+def ComputeSurface(svgFileData,name, numInterLayers, prec, volume=False):
     """
-    
-
-    Parameters
-    ----------
-    Attributes and Layers from svgpathtools
-
-    Returns
-    -------
-    number of paths per layer and also checks wether 
-    the number of paths per layer is the same for all
-    layers
+        This computes a mesh and a triangulated surface from the curve "name", in svgFileData
+        
     """
+
+    CurveNames = svgFileData.CurveNames
+    Commented  = svgFileData.Commented
+
+    triangles = face=normals= Mesh = LayerCoords = None
+    id = [i for i in range(len(CurveNames)) if ((CurveNames[i]==name) & (Commented[i]==False)) ]
+    if len(id)==0:
+        print("Curve: "+name+" is not present")
+
+    elif len(id)==1:
+        print("Curve: "+name+" is only present on a single layer; I will interprete this, but cannot create a triangular surface")
+        
+        # Compute intermediate curves:
+        cPoints = controlPoints(svgFileData.Curves[id[0]])
+
+        # Interpolate curves 
+        LayerCoords, Mesh = CreateMesh([cPoints], [svgFileData.zCoord[id[0]]], prec)    
+
+    else:
+        # We can create a surface from this. The curves are already ordered from bot->top
+        
+        # Create list with curves & z-values on different layers
+        cPoints = list()
+        zCoor   = list()
+        for i in id:
+            points = controlPoints(svgFileData.Curves[i])
+            cPoints.append(points)
+            zCoor.append(svgFileData.zCoord[i])
+
+        # Compute intermediate curves:
+        cPoints, Zvals = InterpolateCurves(cPoints, zCoor, numInterLayers)
+
+        # Compute 2D Array that has the surface
+        LayerCoords, Mesh = CreateMesh(cPoints, Zvals, prec)
+        
+        # Triangulate surface & normals
+        if volume==True:
+            triangles, face, normals = triSurfClose_Compute(LayerCoords, numInterLayers, len(id))
+            print("closed volume")
+        else:
+            triangles, face, normals = triSurfOpen_Compute(LayerCoords, numInterLayers, len(id))
+            print("open surface")
+
+        print("Found curve: " + name )
+
+
+    return triangles, face, normals, Mesh, LayerCoords
+
+
+def InterpolateCurves(cPoints, zCoor, numInterLayers):
+        """
+            Computes intermediate curves
+        """
+
+        # Compute z-values of intermediate layers:
+        idx, Zvals, zAdded = compEmpty(zCoor, numInterLayers)
+        Zvals = np.flip(Zvals)
+        idx = np.flip(idx)
+        
+        print("Zvals="+str(Zvals))
+        print("zCoor="+str(zCoor))
+
+        # Interpolate curves
+        interLayers = list()
+        bezier      = list()
+        for p in range(len(cPoints[0])):
+            bezier = list()
+            for r in range(len(cPoints)):
+                bezier.append(cPoints[r][p])
+
+            # obtain the intermediate curves (interpolated from fixed curves)
+            seg = interp(bezier, zCoor, numInterLayers)
+            interLayers.append(seg)
+
+        reshape = list()
+        for r in range(numInterLayers):
+            layer = list()
+            for p in range(len(cPoints[0])):    
+                x = interLayers[p][r]
+                layer.append(x)
+            reshape.append(layer)
+
+        print("idx="+str(idx))
+        print("Zvals="+str(Zvals))
+        print("zCoor="+str(zCoor))
+        print("len(interLayers)="+str(len(interLayers)))
+        print("len(cPoints)="+str(len(cPoints)))
+        
+        
+        # Append the new curves @ the end of the already existing ones
+        z_Total = []
+        for i in range(len(zCoor)):
+            z_Total.append(zCoor[i])  #
+
+        for i in range(len(zAdded)):
+            cPoints.append(reshape[i])
+            z_Total.append(zAdded[i])   
+
+        print("z_Total="+str(z_Total))
+
+        # Now sort the curves according to z-value:
+        li=[]
+        for i in range(len(z_Total)):
+            li.append([z_Total[i],i])
+        li.sort()                           # sort from top->bottom to be consistent with rest of code
+        sort_ind    =   [x[1] for x in li]
+
+        cPoints_sort =   [cPoints[i]  for i in sort_ind]
+        Zsort       =   [z_Total[i]  for i in sort_ind]
+
+        print("Zsort="+str(Zsort))
+
+
+        # This doesn'y "feel"
+        #count = 0
+        #for i in range(len(idx)):
+        #    if idx[i] == 1:
+        #        cPoints.insert(i, reshape[count])
+        #        count +=1  
+
+        print("len(cPoints)="+str(len(cPoints)))
+        print("len(reshape)="+str(len(reshape)))
+
+        return cPoints_sort, Zsort
+        #return cPoints, Zvals
+
+
+def CreateMesh(cPoints, Zvals, prec):
+    """
+        Create a mesh from various curves
+    """
+    t = np.linspace(0,1, prec)
+    LayerCoors = np.array([])
+    for r in range(len(Zvals)):
+            
+        for p in range(len(cPoints[0])):
+            seg = cPoints[r][p]
+            for s in range(prec):
+                B = deCastel(seg,t[s])
+                B = np.append(B,[Zvals[r]]) 
+                    
+                LayerCoors = np.append([B],LayerCoors)
+        newshape = int(len(LayerCoors)/3)
+        LayerCoors = np.reshape(LayerCoors,(newshape,3))
     
-    #Check for dicts
-    if not isinstance(attributes, list):
-        sys.exit("Attributes must be list")
-    if not isinstance(Layers, dict):
-        sys.exit("Layers must be dictonary")
-    numPaths = 0
-    Counter = list(Layers.values())
-    for i in Layers.values():
-        if i in Counter[0]:
-            numPaths +=1
-    checkPath = 0
-    for p in Layers.values():
-        checkPath = 0
-        for r in range(len(Counter)):
-            if p in Counter[r]:
-                checkPath +=1
-        if checkPath != numPaths:
-            sys.exit("Invalid number of Paths in " + str(p))
-        #if i in attributes.values():
-        #    print("dasads")
-    return numPaths
+    Layer_X = np.reshape(LayerCoors[:,0], (prec*len(cPoints[0]), len(Zvals)))
+    Layer_Y = np.reshape(LayerCoors[:,1], (prec*len(cPoints[0]), len(Zvals)))
+    Layer_Z = np.reshape(LayerCoors[:,2], (prec*len(cPoints[0]), len(Zvals)))
+    Mesh    = (Layer_X,Layer_Y,Layer_Z)
+
+    return LayerCoors, Mesh
 
 def line2coor(path, tol = 1e-6):    # Obsolete?
     """
@@ -173,7 +273,6 @@ def sortLayers(inFile): # Obsolete
 
 
 #es ist halt wirklich die interpolation die von anfang bis end inter aber in der mitte ignoriert
-
 
 
 
@@ -287,8 +386,45 @@ def geomioFront(inFile, numInterLayers, nPrec, name, volume = False, mode = "a")
 
 
 
-
         
-        
+def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "a"):
+    """
+     placeholder function for writing stl files
+        uses the lib np stl
+    """
+    
+    # = This can be replaced 
 
+    import struct
+    import stl
+    from stl import mesh
+
+    if 1==0:
+        # Use the "old" method
+        if volume:
+            triangles, face = triSurfClose(inFile,numInter,nPrec)
+        else:    
+            triangles, face = triSurfOpen(inFile,numInter,nPrec)
+        lc = getCarthesian(inFile, numInter,nPrec)
+    else:
+        # Employ the new approach, that can deal with multiple curves, scaling, Affinity Design etc.
+        svgFileData = readSVG(inFile, True)
+        CurveNames  = get_CurveNames(svgFileData) 
+        triangles, face, normals, Mesh, lc = ComputeSurface(svgFileData,CurveNames[0], numInter, nPrec, volume)
+
+    
+    # Write *.stl file
+    os.chdir("output")
+    cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(face):
+        for j in range(3):
+            cube.vectors[i][j] = lc[f[j],:]
+    
+    #Write the mesh to file "cube.stl"
+    if mode == "a":
+        cube.save(str(name),mode=stl.Mode.ASCII )
+    elif mode == "b":
+        cube.save(str(name),mode=stl.Mode.BINARY )
+    os.chdir("..")
+    return
     

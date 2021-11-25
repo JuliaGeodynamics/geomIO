@@ -1,7 +1,8 @@
 # This contains various routines to read *.SVG files, with multiple layers and multiple curves
+from tokenize import Number
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 from typing import NamedTuple
- 
+from curve_interpolations import *
 
 class Scaling(NamedTuple):
     x0          : float
@@ -12,13 +13,13 @@ class Scaling(NamedTuple):
     dy          : float
 
 class svgFileData(NamedTuple):
-    CurveNames: list
-    Curves    : list
-    LayerNames: list
-    numLayers:  int
-    Commented:  list
-    zCoord:     list
-    Scaling:    Scaling
+    CurveNames : list
+    Curves     : list
+    LayerNames : list
+    numLayers  : int
+    Commented  : list
+    zCoord     : list
+    Scaling    : Scaling
    
 def readSVG(inFile, Verbose=True):
     """
@@ -130,7 +131,7 @@ def readSVG(inFile, Verbose=True):
             if Verbose:
                 print("   Found PATH   : " + curve_str)
                 
-        # in some cases, Affinity Design puts another layer around the paths, so we check that as well here
+        # In some cases, Affinity Design puts another layer around the paths, so we go into that layer as well here
         for elem1 in elem.iterfind(SVG_GROUP_TAG, SVG_NAMESPACE):
             for path2 in elem1.iterfind(SVG_PATH_TAG, SVG_NAMESPACE):
                 att = attributes[CurveNumber]   #
@@ -159,10 +160,18 @@ def readSVG(inFile, Verbose=True):
     if Verbose:
         print("Finished interpreting file : " + inFile + " --- ")
 
+    # Filter names of curves, to take out "-"; 
+    #   In inkscape, not specifying labels of curves will automatically append "-1","-2" etc. to the curve name
+    #   This gets rid of these added parts. In generally, it is a better strategy to explicitly name the curves
+    #   either by setting their id or by adding a label
+    for i in range(len(CurveNames)):
+        id = CurveNames[i].find('-')
+        if id >= 0:
+             CurveNames[i] =  CurveNames[i][0:id]
 
-    # Interpret zLayers
+    # Interpret zLayers (get depth value from name)
     zCoord, sort_ind = get_zCoords(LayerNames, Commented)
-
+    
     # Read Reference layer & determine scaling if it exist
     Scaling = get_Scaling(CurveNames, Curves, LayerNames)
 
@@ -256,7 +265,7 @@ def get_zCoords(LayerNames, Commented):
     """
     
     zCoord = []
-    for i in range(len(LayerNames)-1):
+    for i in range(len(LayerNames)):
      #   print(LayerNames[i] +"  "+ str(i))
         if (Commented[i]==True) :
             zCoord.append(None)    
@@ -264,22 +273,23 @@ def get_zCoords(LayerNames, Commented):
         elif (LayerNames[i]=="Reference"):
             zCoord.append(None)    
 
-        elif (LayerNames[i][0]=="p"):
-            number = float(LayerNames[i][1:len(LayerNames[i])])
+        elif ((LayerNames[i][0]=="p") | (LayerNames[i][0]=="m")):
+            number = Convert_To_Number(LayerNames[i])
+
             zCoord.append(number) 
 
-        elif (LayerNames[i][0]=="m"):
-            number = -float(LayerNames[i][1:len(LayerNames[i])])
+        elif (LayerNames[i][0:2]=="HZ_"):                      # this is used in some old geomIO examples   
+            number = Convert_To_Number(LayerNames[i][3:len(LayerNames[i])])
             zCoord.append(number) 
-            
+
         else:
             try:    # try converting LayerName to float
-                number = float(LayerNames[i])
+                #number = float(LayerNames[i])
+                number = Convert_To_Number(LayerNames[i])
             except: # set to 0 otherwise
                 number = 0.0
             zCoord.append(number)     
             
-    
     # Optional: sort the list with zCoord values from lowest->highest & compute indices     
     li=[]
     for i in range(len(zCoord)):
@@ -287,14 +297,32 @@ def get_zCoords(LayerNames, Commented):
             li.append([1e25,i])
         else:
             li.append([zCoord[i],i])
+    #li.sort(reverse=True)               # sort from top->bottom to be consistent with rest of code
     li.sort()
-
+    
     sort_ind    =   [x[1] for x in li]
     
     return zCoord, sort_ind
 
 
-def get_CurveNames(Data):
+def Convert_To_Number(string):
+    """
+        This takes a string and converts it to a number
+
+        The reason we need this is that names can be "10p25" where "p" implies a point
+    """
+    # plus @ beginning implies +
+    if string[0] == "p":
+        string = string[1:len(string)]
+
+    string = string.replace('p','.')     # p in middle = '.'
+    string = string.replace("m","-")     # minus sign
+
+    number = float(string)
+    return number
+
+
+def get_CurveNames(svgFileData):
     """
     Parameters
     ----------
@@ -305,15 +333,15 @@ def get_CurveNames(Data):
     UniqueCurveNames : List with unique Curve Names on "real" layers
     """
 
-    Commented   =   Data[4]  
-    Curves      =   Data[0]
-    LayerNames  =   Data[2]
-    CurveNames  =   []
-    for i in range(len(Curves)):
+    Commented           =   svgFileData.Commented
+    CurvesNames_init    =   svgFileData.CurveNames
+    LayerNames          =   svgFileData.LayerNames
+    CurveNames          =   []
+    for i in range(len(CurvesNames_init)):
         if (Commented[i]==False) & (LayerNames[i]!="Reference"):
-            CurveNames.append(Curves[i])     
+            CurveNames.append(CurvesNames_init[i])     
     
-    CurveNamesUnique = set(CurveNames)
+    CurveNamesUnique = list(set(CurveNames))
     
     return CurveNamesUnique
 
@@ -343,7 +371,6 @@ def get_Scaling(CurveNames, Curves, LayerNames):
     Scaling_data    =   Scaling(None,None,None,None,None,None)     
     for i in range(len(Curves)):
         if (LayerNames[i]=="Reference"):
-            print(LayerNames[i])
             # A reference layer is present: 
             #   interpret the name of the curve to extract "real world" 
             #   x/y coordinates of begin & end-points
@@ -365,75 +392,3 @@ def get_Scaling(CurveNames, Curves, LayerNames):
             Scaling_data    =   Scaling(x0,y0,x0_SVG,y0_SVG,dx,dy)              
 
     return Scaling_data
-
-
-
-
-#redo for naming layers
-def getLayers(inFile):  # can later be largely replaced by readSVG
-    """
-    Parameters
-    ----------
-    inFile : Input svg File
-        The .svg file used. Warning: must be Inkscape SVG
-
-    Returns
-    -------
-    Layers : dict
-        Dictonary containing the information which path belongs to which layer.
-        If Layers represent geological ages then the first entry of the dict is 
-        the first layer created in Inkscape(and usually the oldest)
-    """
-    f = open(inFile)
-    text = f.readlines()
-    index = []
-    numLayers = 0
-    for i in range(len(text)):
-        if "<g" in text[i]:
-            numLayers += 1
-            index.append(i)
-            
-    index.append(int(len(text)))
-    #print(index )
-    #Layers = list()
-    Layers = dict()
-    #print(index)
-    initNum = 0
-    compNum = 0
-    
-    #-------------BUG!!!------------------
-    for i in range(len(index)-1):
-        #print(i)#
-        if i > 0:
-            if compNum != initNum and "$" not in str(text[index[i]:index[i+1]])  :
-                #print(initNum,compNum)
-                sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
-        compNum = 0
-        for p in range(index[i],index[i+1]):
-            if "inkscape:label"  in text[p]:
-                layerSTR = text[p]
-                layerSTR = layerSTR.split("\"")
-                #print(layerSTR)
-                layer = layerSTR[1]
-                #print(layer)
-            else:
-                layerSTR = "Layer" + str(p)
-            if "id=\"path"  in text[p]:
-                
-                if i == 0:
-                    initNum += 1
-                    compNum +=1
-                    pathSTR = text[p]
-                    pathSTR = pathSTR.split("\"")
-                    pathSTR = pathSTR[1]
-                    Layers[pathSTR] = layer
-                else:                    
-                    compNum +=1
-                    #print (compNum)
-                    pathSTR = text[p]
-                    pathSTR = pathSTR.split("\"")
-                    pathSTR = pathSTR[1]
-                    Layers[pathSTR] = layer
-
-        #Layers.append(Paths)
-    return Layers, numLayers
