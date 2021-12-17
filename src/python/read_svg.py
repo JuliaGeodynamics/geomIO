@@ -1,6 +1,7 @@
 # This contains various routines to read *.SVG files, with multiple layers and multiple curves
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 from typing import NamedTuple
+import sys
  
 
 class Scaling(NamedTuple):
@@ -270,6 +271,8 @@ def get_zCoords(LayerNames, Commented):
             zCoord.append(number) 
 
         elif (LayerNames[i][0]=="m"):
+            #if "p" in LayerNames[i][:]:
+                
             number = -float(LayerNames[i][1:len(LayerNames[i])])
             zCoord.append(number) 
             
@@ -408,7 +411,8 @@ def getLayers(inFile):  # can later be largely replaced by readSVG
         if i > 0:
             if compNum != initNum and "$" not in str(text[index[i]:index[i+1]])  :
                 #print(initNum,compNum)
-                sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
+                print("Potential Problem with number of Controlpoints")
+                #sys.exit("Number of Paths must be equal per Layer. Invalid number in:" + str(layer))
         compNum = 0
         for p in range(index[i],index[i+1]):
             if "inkscape:label"  in text[p]:

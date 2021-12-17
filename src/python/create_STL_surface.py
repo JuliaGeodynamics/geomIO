@@ -1,5 +1,5 @@
 
-from curve_interpolations import *
+from .curve_interpolations import *
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 import numpy as np
 import matplotlib.pyplot as plt

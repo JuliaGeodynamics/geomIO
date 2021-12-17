@@ -1,5 +1,6 @@
 from svgpathtools import svg2paths
-from read_svg import getLayers
+#from read_svg import getLayers
+from .read_svg import *
 import numpy as np
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 from scipy import interpolate
@@ -13,6 +14,7 @@ import math
 import sys,os
 #import ipdb
 import scipy as sc
+from .read_svg import *
 
 def getZvalues(inFile):  # obsolete
     """
@@ -141,7 +143,8 @@ def getCpoints(inFile):
 
     """
     paths, attributes = svg2paths(inFile)
-    
+    data = readSVG(inFile)
+    c = data.Curves
     ###-----------hier rein basteln---------
     cPoints = list()
     ig  = ignore(inFile)

@@ -1,20 +1,24 @@
 import sys, os
 
 
-x = os.getcwd()
-sys.path.append('../src/python')
-os.chdir("..")
-os.chdir("src/python")
+# x = os.getcwd()
+# sys.path.append('../src/python')
+# os.chdir("..")
+# os.chdir("src/python")
+
+sys.path.insert(0, os.chdir('..'))
+
+from src.python import geomio
+os.chdir('test')
 
 
-import geomio
-os.chdir(x)
+#os.chdir(x)
 #from geomIO.src.python import geomio
 #name of the inputfile
 inFile = "input/over.svg"
 
 #name of the stl file which will be generated
-name = 'folds2.stl'
+name = 'folds3.stl'
 
 #wether it is a closed volume or an open surface
 Volume = False
@@ -26,9 +30,9 @@ numInterLayers = 4
 nPrec = 40
 
 
-
+    
 #calling the main function
-geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
+#geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
 #plot the pointcloud. requiers open3d
 
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)
