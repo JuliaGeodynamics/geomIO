@@ -33,11 +33,11 @@ import scipy as sc
 from scipy import interpolate
 
 #import stlWrite
-from .pointcloud_delaunay import *
+from pointcloud_delaunay import *
 
-from .read_svg import *
-from .curve_interpolations import *
-from .create_STL_surface import *
+from read_svg import *
+from curve_interpolations import *
+from create_STL_surface import *
 
 #os.chdir("..")
 

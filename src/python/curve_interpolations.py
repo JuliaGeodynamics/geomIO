@@ -1,20 +1,20 @@
 from svgpathtools import svg2paths
 #from read_svg import getLayers
-from .read_svg import *
+from read_svg import *
 import numpy as np
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 from scipy import interpolate
 
-from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
-import numpy as np
+
+
 import matplotlib.pyplot as plt
 from matplotlib.path import Path as Pt
 import matplotlib.patches as patches
 import math
 import sys,os
-#import ipdb
+
 import scipy as sc
-from .read_svg import *
+
 
 def getZvalues(inFile):  # obsolete
     """

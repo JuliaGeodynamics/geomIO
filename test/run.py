@@ -1,19 +1,10 @@
 import sys, os
 
+fpath = os.path.dirname(__file__)
+geomIOpath = os.path.join(fpath, '../src/python')
+sys.path.append(geomIOpath)
+import geomio
 
-# x = os.getcwd()
-# sys.path.append('../src/python')
-# os.chdir("..")
-# os.chdir("src/python")
-
-sys.path.insert(0, os.chdir('..'))
-
-from src.python import geomio
-os.chdir('test')
-
-
-#os.chdir(x)
-#from geomIO.src.python import geomio
 #name of the inputfile
 inFile = "input/over.svg"
 
@@ -30,7 +21,7 @@ numInterLayers = 4
 nPrec = 40
 
 
-    
+
 #calling the main function
 #geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
 #plot the pointcloud. requiers open3d
@@ -40,6 +31,3 @@ nPrec = 40
 
 #get the voundaries of the mesh/volume
 geomio.getBounds(inFile, numInterLayers, nPrec)
-
-
-
