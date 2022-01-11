@@ -4,6 +4,7 @@ fpath = os.path.dirname(__file__)
 geomIOpath = os.path.join(fpath, '../src/python')
 sys.path.append(geomIOpath)
 import geomio
+import numpy as np
 
 #name of the inputfile
 inFile = "input/over.svg"
@@ -21,11 +22,14 @@ numInterLayers = 4
 nPrec = 40
 
 
+#grid = np.load("grid.npy")*1e3
+
 
 #calling the main function
-#geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
+geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
 #plot the pointcloud. requiers open3d
-
+#Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
+#np.save("phase.npy", Phase)
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)
 #l,nl = geomio.getLayers(inFile)
 

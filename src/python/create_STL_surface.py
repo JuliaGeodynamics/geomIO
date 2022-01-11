@@ -7,9 +7,12 @@ from matplotlib.path import Path as Pt
 import matplotlib.patches as patches
 import math
 import sys,os
-#import ipdb
 import scipy as sc
 from scipy import interpolate
+
+
+        
+        
 
 
 def triNormals(tri,lc):
@@ -93,8 +96,10 @@ def triSurfOpen(inFile, nInter, nPrec):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
-    np.save("surf",mesh1)
-
+    # CoorR = np.zeros_like(mesh1)
+    # CoorR[0,:] = LayerCoors[1,:]
+    # CoorR[1,:] = LayerCoors[2,:]
+    # CoorR[2,:] = LayerCoors[0,:]
     
     
     return mesh1, triangles
@@ -139,13 +144,7 @@ def layerTri(lc, numP, LLI, last = True):
         triangles = np.concatenate((triangles, first))
         
     normals = triNormals(triangles, lc)
-    # if last:
-        
-    #     normals = np.zeros((len(triangles),3))
-    #     normals[:,2] = 1
-    # else:
-    #     normals = np.zeros((len(triangles),3))
-    #     normals[:,2] = -1
+
     mesh = np.array([])
     for p in range(len(triangles)):
         #first ind = first tri
@@ -281,24 +280,15 @@ def triSurfClose(inFile, nInter, nPrec):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,0]]))
         mesh1 = np.concatenate((mesh1, lc[triangles[p,1]]))
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
+        #vertex = Tri(lc[triangles[p,0]],lc[triangles[p,1]],lc[triangles[p,1]])
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
     mesh1 = np.concatenate((mesh1,cover))
     triangles = np.concatenate((triangles,covTri))
-    #for d in range(2):
-    # mesh1 = np.concatenate((mesh1,mesh2))
-    # mesh1 = np.concatenate((mesh1,mesh3))
 
-    # triangles = np.concatenate((triangles,triCov1))
-    # faceLast = triCov2+LLI
-    # triangles = np.concatenate((triangles,faceLast))        
-    
-    #return cover, covTri
     return mesh1, triangles
 
-# inFile = 'input/slab.svg'
 
-# mesh1, tri = triSurfClose(inFile, 5,20)
 
 
 

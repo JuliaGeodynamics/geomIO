@@ -165,7 +165,13 @@ def sortLayers(inFile): # Obsolete
             c +=1      
     return 
 
+from raytest import *
+def rayTracing(inFile, numInter, nPrec, grid):
 
+    
+    Phase = OpenVolumeTest(inFile, numInter, nPrec, grid)
+    
+    return Phase
 
 
 
