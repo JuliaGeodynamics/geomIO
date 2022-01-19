@@ -411,12 +411,12 @@ def getCarthesian(inFile, numInterLayers, prec):
                 LayerCoors = np.append([B],LayerCoors)
     newshape = int(len(LayerCoors)/3)
     LayerCoors = np.reshape(LayerCoors,(newshape,3))
-    # CoorR = np.zeros_like(LayerCoors)
-    # CoorR[0,:] = LayerCoors[1,:]
-    # CoorR[1,:] = LayerCoors[2,:]
-    # CoorR[2,:] = LayerCoors[0,:]
-    return LayerCoors
-
+    CoorR = np.zeros_like(LayerCoors)
+    CoorR[:,0] = LayerCoors[:,0]
+    CoorR[:,1] = LayerCoors[:,2]
+    CoorR[:,2] = LayerCoors[:,1]
+    return CoorR#LayerCoors
+    #return LayerCoors
 def groupSegments(cPoints):
     """
     turns the layer list into a list of equal segments

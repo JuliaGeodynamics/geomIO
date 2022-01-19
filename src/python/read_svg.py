@@ -388,6 +388,7 @@ def getLayers(inFile):  # can later be largely replaced by readSVG
         If Layers represent geological ages then the first entry of the dict is 
         the first layer created in Inkscape(and usually the oldest)
     """
+    #search /g and test if num of oc of g is the same as /g
     f = open(inFile)
     text = f.readlines()
     index = []

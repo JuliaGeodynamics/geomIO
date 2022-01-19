@@ -282,12 +282,14 @@ def plotBezier(cPoints):
     return
 
 
+import time
 
-
-def geomioFront(inFile, numInterLayers, nPrec, name, volume = False, mode = "a"):
+def geomioFront(inFile, numInterLayers, nPrec, name, volume = False, mode = "ASCII"):
     
+    t1 = time.time()
     wSTL(inFile, numInterLayers, nPrec, name, volume, mode)
-    
+    t2 = time.time()
+    print(t2-t1)
     return
     
 

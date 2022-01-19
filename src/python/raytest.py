@@ -101,6 +101,7 @@ import sys,os
 #import ipdb
 import scipy as sc
 from scipy import interpolate
+from numba import jit
 
 class Tri(object):
     
@@ -117,8 +118,34 @@ class Tri(object):
             return False
         
         
-
-
+#@jit(nopython=True) 
+def mainTest(triangles, lc, grid):
+    upBound = np.amax(grid[2,:])
+    cells = len(grid[0,:])
+    Phase = np.zeros([cells])
+    
+    
+    for p in range(len(triangles)):
+        #loop over all triangles
+        print(p)
+        #currentTri = np.array([lc[triangles[p,0]],lc[triangles[p,1]],lc[triangles[p,2]]])
+        v1 = lc[triangles[p,0]]
+        v2 = lc[triangles[p,1]]
+        v3 = lc[triangles[p,2]]
+        for r in range(len(Phase)):
+            #loop over coordinates
+            top = grid[:,r].copy()
+            top[2] = upBound
+            nInter = 0
+            
+            if intersec(grid[:,r],top,v1,v2,v3):
+                nInter +=1
+                if nInter == 0:
+                    Phase[r]= 0
+                elif nInter %2 !=0:
+                    
+                    Phase[r]=1
+    return Phase
 
 
 def OpenVolumeTest(inFile, nInter, nPrec, grid):
@@ -175,28 +202,10 @@ def OpenVolumeTest(inFile, nInter, nPrec, grid):
     triangles = np.concatenate((tri1,tri2))
 
     #Phase = np.zeros((grid.size/3))
-    upBound = np.amax(grid[2,:])
-    cells = len(grid[0,:])
-    Phase = np.zeros([cells])
+
+    #redo in parallel
+    print(len(triangles))
     
-            
-    for p in range(len(triangles)):
-        print(p)
-        #currentTri = np.array([lc[triangles[p,0]],lc[triangles[p,1]],lc[triangles[p,2]]])
-        v1 = lc[triangles[p,0]]
-        v2 = lc[triangles[p,1]]
-        v3 = lc[triangles[p,2]]
-        for r in range(len(Phase)):
-            top = grid[:,r].copy()
-            top[2] = upBound
-            nInter = 0
-            if intersec(grid[:,r],top,v1,v2,v3):
-                nInter +=1
-                if nInter == 0:
-                    Phase[r]= 0
-                elif nInter %2 !=0:
-                    
-                    Phase[r]=1
             
             
         #first ind = first tri
@@ -207,7 +216,7 @@ def OpenVolumeTest(inFile, nInter, nPrec, grid):
         
     #mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
     #np.save("surf",mesh1)
-
+    Phase = mainTest(triangles, lc, grid)
     
     
     return Phase

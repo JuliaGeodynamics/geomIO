@@ -9,39 +9,16 @@ import math
 import sys,os
 import scipy as sc
 from scipy import interpolate
+from numba import jit
 
 
-        
-        
-
-
-def triNormals(tri,lc):
-    """
-    Function to compute the normal of a triangle
-    currently unused
-    """
-    normals = np.zeros((len(tri),3))
-    for i in range(len(tri)):
-        #print(i)
-        p1 = lc[tri[i,0],:]
-        p2 = lc[tri[i,1],:]
-        p3 = lc[tri[i,2],:]
-        norm = np.cross(p2-p1, p3-p1)
-        normals[i,:] = norm
-    return normals
-
-def triSurfOpen(inFile, nInter, nPrec):
-    """
-    surface triangulation for open surfaces
-    """
-    Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(inFile,nInter,nPrec)
-
-    nQuads = nInter+numLayers -1
-    tri1 = np.array([])
-    tri2 = np.array([])
+#@jit(nopython=True) 
+def indexingOpen(Layers, numLayers, lc, nInter):
+    nQuads = nInter+numLayers -1 # number of quads to be split in two triangles
+    tri1 = np.array([])#first set of quadhalfs
+    tri2 = np.array([])#second set of quadhalfs
     for p in range(nQuads):
-        numP = int(len(lc)/(nQuads+1))
+        numP = int(len(lc)/(nQuads+1))#number of ???
         nodeIdx = numP *p
         shape = (int(numP*2)-2,3)
         shapeS = (numP,3)
@@ -104,9 +81,40 @@ def triSurfOpen(inFile, nInter, nPrec):
     
     return mesh1, triangles
 
+      
+
+@jit(nopython=True) 
+def triNormals(tri,lc):
+    """
+    Function to compute the normal of a triangle
+    currently unused
+    """
+    normals = np.zeros((len(tri),3))
+    for i in range(len(tri)):
+        #print(i)
+        p1 = lc[tri[i,0],:]
+        p2 = lc[tri[i,1],:]
+        p3 = lc[tri[i,2],:]
+        norm = np.cross(p2-p1, p3-p1)
+        normals[i,:] = norm
+    return normals
+def triSurfOpen(inFile, nInter, nPrec):
+    """
+    surface triangulation for open surfaces
+    """
+    Layers, numLayers = getLayers(inFile)
+    
+    lc = getCarthesian(inFile,nInter,nPrec) # get coordinates
+    
+    m1, t = indexingOpen(Layers, numLayers, lc, nInter)
+    
+    return m1, t
+    
+   
+
 from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
     
-
+@jit(nopython=True) 
 def layerTri(lc, numP, LLI, last = True):
     
 
@@ -165,7 +173,7 @@ def layerTri(lc, numP, LLI, last = True):
         
             
     return mesh, triangles
-
+@jit(nopython=True) 
 def triangulateCover(lc):
     numP = len(lc)
     shape = len(lc)-2
@@ -294,7 +302,7 @@ def triSurfClose(inFile, nInter, nPrec):
 
 
 
-def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "a"):
+def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "ASCII"):
     """
     placeholder function for writing stl files
     uses the lib np stl
@@ -308,6 +316,7 @@ def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "a"):
     else:
             
         triangles, face = triSurfOpen(inFile,numInter,nPrec)
+    #nec for writing
     lc = getCarthesian(inFile, numInter,nPrec)
     os.chdir("output")
     cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
@@ -315,12 +324,15 @@ def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "a"):
         for j in range(3):
             cube.vectors[i][j] = lc[f[j],:]
     
+    print(os.getcwd())
     #Write the mesh to file "cube.stl"
-    if mode == "a":
+    if mode == "ASCII":
         
         cube.save(str(name),mode=stl.Mode.ASCII )
-    elif mode == "b":
+    elif mode == "BIN":
         cube.save(str(name),mode=stl.Mode.BINARY )
+    #else:
+    #    print("Please set writing mode to BIN or ASCII")
     os.chdir("..")
     return
 
