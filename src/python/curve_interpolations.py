@@ -433,6 +433,7 @@ def groupSegments(cPoints):
 
 
 
+
 def Dim(cPoints, nLayers = 15):
     segments = groupSegments(cPoints)
     adLayers = list()

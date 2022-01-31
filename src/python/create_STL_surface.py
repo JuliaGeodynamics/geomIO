@@ -83,7 +83,7 @@ def indexingOpen(Layers, numLayers, lc, nInter):
 
       
 
-@jit(nopython=True) 
+#@jit(nopython=True) 
 def triNormals(tri,lc):
     """
     Function to compute the normal of a triangle
@@ -114,7 +114,7 @@ def triSurfOpen(inFile, nInter, nPrec):
 
 from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
     
-@jit(nopython=True) 
+#@jit(nopython=True) 
 def layerTri(lc, numP, LLI, last = True):
     
 
@@ -173,7 +173,7 @@ def layerTri(lc, numP, LLI, last = True):
         
             
     return mesh, triangles
-@jit(nopython=True) 
+#@jit(nopython=True) 
 def triangulateCover(lc):
     numP = len(lc)
     shape = len(lc)-2
