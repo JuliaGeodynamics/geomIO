@@ -67,7 +67,7 @@ def getPoints2D(inFile, nPrec):
                  
                 
                 Coordinates = np.append([B],Coordinates)
-    #for r in range(cPoints):
+
         
     
     newshape = int(len(Coordinates)/2)
