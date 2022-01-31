@@ -55,7 +55,108 @@ def intersec(p1,p2,v1,v2,v3, eps = 0.1):
         
         #here comes the coplanar stuff
         return
+
+def insideTriangle2D(point, vertices):
+    """
+    determine if point is inside 2D triangle using barycentric weights
+    https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution    
+    https://math.stackexchange.com/questions/51326/determining-if-an-arbitrary-point-lies-inside-a-triangle-defined-by-three-points
+    Parameters
+    ----------
+    point : Point to test for
+    vertices : vertices of 2D triangle
+        
+
+    Returns
+    -------
+    Bool
+
+    """
+    point = point.astype(float)
+    vertices = vertices.astype(float)
+    a = vertices[0]
+    b = vertices[1]
+    c = vertices[2]
+    xd = np.cross(a,b) + np.cross(b,c) + np.cross(c,a)
+    
+    xa = np.cross(b,c) + np.cross(point, b-c)
+    xb = np.cross(c,a) + np.cross(point, c-a)
+    xc = np.cross(a,b) + np.cross(point, a-b)
+    
+    wa = xa/xd
+    wb = xb/xd
+    wc = xc/xd
+    
+    
+    if 0<wa<1 and 0<wb<1 and 0<wc<1:
+        return True
+    else:
+        return False
+    
+    
+    #this is a point
+    # v0 = vertices[0]
+    # #these are vectors
+    # v1 = vertices[1]- v0
+    # v2 = vertices[2] - v0
+    
+    # a = (np.cross(point,v2)-np.cross(v0,v2))/np.cross(v1,v2)
+    
+    # b = (np.cross(point,v1)-np.cross(v0,v1))/np.cross(v1,v2)
+    
+    # c = a+b
+    # if c<1 and a >0 and b>0:
+    #     return True
+    # else:
+    #     return False
+#---------test for inside 2d triangle(passed)--------    
+# ver = np.array([[1,1],[4,2],[2,7]])
+# point = np.array([2,3])
+# x = insideTriangle2D(point,ver)
+
+
+def fastRay(surf, lc, grid):
+    
+    Layers = np.unique(grid[:,2])
+    numZ = 000 #tbd
+    points = np.array([grid[0:Layers], grid[1:Layers]])
+    numPoints = points.size
+    inter = np.zeros_like(points)
+    numberInter = np.zeros_like(points)
+    interTri = np.array([])
+    
+    for i in range(len(points)):
+        for p in range(len(triangles)):
+                v1 = lc[triangles[p,0]]
+                v2 = lc[triangles[p,1]]
+                v3 = lc[triangles[p,2]]
+                vertex = np.array([v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]])
+                if insideTriangle2D:
+                    inter[i]= 1
+                    numberinter[i] +=1
+                    interTri = np.append([p], interTri)
+                else:
+                    continue
+    for r in range(Layers):
+        for s in range(numPoints):
+            if inter[s] ==0:
+                continue
+            else:
+                for p in range(numZ):
+                    intersections = 0
+                    for t in range(numInter[s]):
+                        print("ich stehe nur hier damit der code kompiliert ;)" )
+                        
+
+    
+    return
+
+
+
 #normalvektoren weg
+
+
+
         #even uneven!!!
 def gridWrap(surf, grid):
     upBound = np.amax(grid[2,:])
@@ -224,198 +325,7 @@ def OpenVolumeTest(inFile, nInter, nPrec, grid):
 # from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
     
 
-# def layerTri(lc, numP, LLI, last = True):
-    
 
-    
-#     if (numP % 2) == 0:
-#         shape = (int((numP-2)/2),3)
-#         index1 = np.zeros(shape, dtype = int)
-#         index2 = np.zeros(shape, dtype = int)
-#         for i in range(len(index1)):
-#             index1[i,0] = i
-#             index1[i,1] = i+1
-#             index1[i,2] = numP-1-i
-            
-#             index2[i,0] = i
-#             index2[i,1] = numP-1-i
-#             index2[i,2] = numP -2 -i
-    
-#         triangles = np.concatenate((index1,index2))
-
-#     else:
-#         shape = (int((numP-3)/2),3)
-#         index1 = np.zeros(shape, dtype = int)
-#         index2 = np.zeros(shape, dtype = int)
-#         for i in range(len(index1)):
-#             index1[i,0] = i+1
-#             index1[i,1] = i+2
-#             index1[i,2] = numP-1-i
-            
-#             index2[i,0] = i+1
-#             index2[i,1] = numP-i -1
-#             index2[i,2] = numP -2 -i
-    
-#         first = np.array([[0,1,numP-1]])
-#         triangles = np.concatenate((index1,index2))
-#         triangles = np.concatenate((triangles, first))
-        
-#     normals = triNormals(triangles, lc)
-
-#     mesh = np.array([])
-#     for p in range(len(triangles)):
-#         #first ind = first tri
-#         mesh = np.concatenate((mesh, normals[p]))
-#         mesh = np.concatenate((mesh, lc[triangles[p,0]]))
-#         mesh = np.concatenate((mesh, lc[triangles[p,1]]))
-#         mesh = np.concatenate((mesh, lc[triangles[p,2]]))
-        
-#     mesh = np.reshape(mesh,(len(triangles)*4,3))
-   
-#     if last and (numP % 2) == 0:
-#         trueIdx = np.concatenate((index1 + LLI, index2 + LLI))
-#         triangles = trueIdx
-#     elif last:
-#         trueIdx = np.concatenate((index1 + LLI, index2 + LLI))
-#         triangles = np.concatenate((trueIdx, first + LLI))
-
-        
-            
-#     return mesh, triangles
-
-# def triangulateCover(lc):
-#     numP = len(lc)
-#     shape = len(lc)-2
-#     ind = np.zeros((shape,3))
-#     triangles = np.zeros((shape,3), dtype = int)
-#     for i in range(shape):
-#         triangles[i,0] = i 
-#         triangles[i,1] = i+1
-#         triangles[i,2] = numP-2-i
-#     normals = triNormals(triangles, lc)
-#     mesh = np.array([])
-#     for p in range(len(triangles)):
-#         #first ind = first tri
-#         mesh = np.concatenate((mesh, normals[p]))
-#         mesh = np.concatenate((mesh, lc[triangles[p,0]]))
-#         mesh = np.concatenate((mesh, lc[triangles[p,1]]))
-#         mesh = np.concatenate((mesh, lc[triangles[p,2]]))
-        
-#     mesh = np.reshape(mesh,(len(triangles)*4,3))
-    
-#     return  mesh, triangles
-
-# def triSurfClose(inFile, nInter, nPrec):
-#     """
-#     surface triangulation for closed volumes
-#     """
-#     Layers, numLayers = getLayers(inFile)
-#     lc = getCarthesian(inFile,nInter,nPrec)
-
-#     nQuads = nInter+numLayers -1
-#     tri1 = np.array([])
-#     tri2 = np.array([])
-    
-#     #========Section where the "covers" are done : faulty
-#     #number of points per layer
-#     numP = int(len(lc)/(nQuads+1))
-#     #get x and y coordinates from first and last layer
-#     #cov1 = lc[0:numP,0:2]
-#     cov1Z = lc[0:numP,:]
-#     #last layer index, start of last layer
-#     LLI = len(lc)-numP
-#     #cov2 = lc[LLI:-1,0:2]
-#     cov2Z =lc[LLI:-1,:]
-#     dummy = np.array([lc[len(lc)-1]])
-#     cov2Z = np.concatenate((cov2Z,dummy))
-#     # startCov = Delaunay(cov1,furthest_site=True)
-#     # endCov = Delaunay(cov2, furthest_site=True)
-    
-#     #cCF, cTF = layerTri(cov1Z,numP,LLI, False)
-#     #cCL, cTL = layerTri(cov2Z, numP, LLI, True)
-#     cCF, cTF = triangulateCover(cov1Z)
-#     cCL, cTL = triangulateCover(cov2Z)
-#     cTL += LLI
-#     #coordinatses of both covers
-#     cover = np.concatenate((cCF,cCL))
-#     #index of the triangles in lc
-#     covTri = np.concatenate((cTF,cTL))
-
-    
-
-#     #=======section for inside: working    
-
-#     for p in range(nQuads):
-
-#         nodeIdx = numP *p
-#         shape = (int(numP*2)-2,3)
-#         shapeS = (numP,3)
-#         ind = np.zeros(shapeS, dtype = int)
-#         ind2 = np.zeros(shapeS,dtype=int)
-#         arrshift = numP-1
-#         counter = 0
-#         if p == 0:
-#             for i in range(numP):
-
-#                 ind[i,0] = i
-#                 ind[i,1] = i+1
-#                 ind[i,2] = numP+i
-                
-#                 ind2[i,0] = numP +i
-#                 ind2[i,1] = numP + i+1
-#                 ind2[i,2] = i+1
-#                 counter +=1
-#             tri1 = ind
-#             tri2 = ind2
-#         else:
-    
-#             for i in range(numP):
-
-#                 ind[i,0] = nodeIdx + i
-#                 ind[i,1] = nodeIdx + i+1
-#                 ind[i,2] = nodeIdx + arrshift+i
-                
-#                 ind2[i,0] = nodeIdx + arrshift +i
-#                 ind2[i,1] = nodeIdx + arrshift + i+1
-#                 ind2[i,2] = nodeIdx+ i+1
-#                 counter +=1
-                
-#             tri2 = np.concatenate((ind2, tri2))    
-#             tri1 = np.concatenate((ind, tri1))
-    
-#     triangles = np.concatenate((tri1,tri2))
-#     normals = triNormals(triangles, lc)
-
-#     mesh1 = np.array([])
-#     #print(counter)
-    
-    
-            
-#     for p in range(len(triangles)):
-#         #first ind = first tri
-#         mesh1 = np.concatenate((mesh1, normals[p]))
-#         mesh1 = np.concatenate((mesh1, lc[triangles[p,0]]))
-#         mesh1 = np.concatenate((mesh1, lc[triangles[p,1]]))
-#         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
-#         #vertex = Tri(lc[triangles[p,0]],lc[triangles[p,1]],lc[triangles[p,1]])
-        
-#     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
-#     mesh1 = np.concatenate((mesh1,cover))
-#     triangles = np.concatenate((triangles,covTri))
-#     #for d in range(2):
-#     # mesh1 = np.concatenate((mesh1,mesh2))
-#     # mesh1 = np.concatenate((mesh1,mesh3))
-
-#     # triangles = np.concatenate((triangles,triCov1))
-#     # faceLast = triCov2+LLI
-#     # triangles = np.concatenate((triangles,faceLast))        
-    
-#     #return cover, covTri
-#     return mesh1, triangles
-
-# # inFile = 'input/slab.svg'
-
-# # mesh1, tri = triSurfClose(inFile, 5,20)
 
     
         
