@@ -42,6 +42,8 @@ from create_STL_surface import *
 #os.chdir("..")
 
 
+
+
 def getPoints2D(inFile, nPrec):
     
     data = readSVG(inFile)

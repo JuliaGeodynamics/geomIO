@@ -1,3 +1,5 @@
+
+#=
 using Test, geomIO, PythonCall
 
 
@@ -61,3 +63,4 @@ svgFileData = pygeomio.readSVG(inFile, false)
 @test pyconvert(Int64,svgFileData[3]) == 3
 @test pyconvert(Vector,svgFileData[5])==[0.0,100.0,100.0,100.0,nothing]
 @test pyconvert(Vector,svgFileData[6])[3] ≈ 267.841
+=#

@@ -16,22 +16,22 @@ name = 'fold7.stl'
 Volume = False
 
 #how many layers are interpolated in total
-numInterLayers = 80
+numInterLayers = 4
 
 #number of points that are computed per bezier segment
-nPrec = 400
+nPrec = 40
 #print(os.getcwd())
 
-#grid = np.load("grid.npy")*1e3
+grid = np.load("grid.npy")*1e3
 
 #coors = geomio.getPoints2D(inFile,nPrec)
 #mode bin or asc
 #calling the main function
 #geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
 #plot the pointcloud. requiers open3d
-#Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
+Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
 #np.save("phase.npy", Phase)
-geomio.plotCloud3D(inFile,numInterLayers,nPrec)
+#geomio.plotCloud3D(inFile,numInterLayers,nPrec)
 #l,nl = geomio.getLayers(inFile)
 
 #get the voundaries of the mesh/volume

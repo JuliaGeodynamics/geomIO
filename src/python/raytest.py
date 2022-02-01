@@ -114,42 +114,78 @@ def insideTriangle2D(point, vertices):
 # point = np.array([2,3])
 # x = insideTriangle2D(point,ver)
 
+def interTRiangleFast(v1,v2,v3, zVal):
+    
+    """
+    https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution    
+    
+    """
+    avg = (v1+v2+v3)/3
+    if zVal < avg :
+        return True
+    else:
+        return False
 
-def fastRay(surf, lc, grid):
+
+def fastRay(triangles, lc, grid):
     
-    Layers = np.unique(grid[:,2])
-    numZ = 000 #tbd
-    points = np.array([grid[0:Layers], grid[1:Layers]])
-    numPoints = points.size
-    inter = np.zeros_like(points)
-    numberInter = np.zeros_like(points)
-    interTri = np.array([])
+    Phase = np.array([])
+    zVals = np.unique(grid[2,:]) 
+    Layers = len(np.unique(grid[2,:]))                     # number of different z coordinates
+    numPoints = np.unique(grid[2,:], return_counts = True)[1][0]  # number of points per layer
+    # I need every 56th(layers) x and y coordinate better have function that determines this
+    x = grid[0,:])
+    y = grid[1,:])
+    points = np.concatenate((x,y))
+    #points = np.array([[grid[0,0:Layers], grid[1,0:Layers]]])     # x and y coordinates of these cells
+    numPoints = points.size                                 # number of cells per z coordinate
+    #inter = np.zeros_like(points)                          # number of intersections with trianglew
+    numberInter = np.zeros_like(points)                     # number of intersections with triangles
+    interTri = np.array([])                                 # index wich traingles are inntersected
     
-    for i in range(len(points)):
-        for p in range(len(triangles)):
+    for i in range(len(points)):                            # check all x  and y coordinates for intersection
+        for p in range(len(triangles)):                 
                 v1 = lc[triangles[p,0]]
                 v2 = lc[triangles[p,1]]
                 v3 = lc[triangles[p,2]]
-                vertex = np.array([v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]])
+                vertex = np.array([[v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]]])
                 if insideTriangle2D:
-                    inter[i]= 1
-                    numberinter[i] +=1
-                    interTri = np.append([p], interTri)
+                    #inter[i]= 1
+                    numberInter[i] +=1                      # count the intersections
+                    interTri = np.append([p], interTri)     # save the index to triangle that intersects
                 else:
                     continue
-    for r in range(Layers):
-        for s in range(numPoints):
-            if inter[s] ==0:
-                continue
-            else:
-                for p in range(numZ):
-                    intersections = 0
-                    for t in range(numInter[s]):
-                        print("ich stehe nur hier damit der code kompiliert ;)" )
-                        
+    triCounter = 0
 
-    
-    return
+    ph = np.zeros(numPoints)                             # test for all coordinates
+    for s in range(numPoints):
+         
+       
+            for p in range(numZ):
+                if numberInter[s] ==0:                          # if no intersection whole column will be ignored
+            
+                    Phase = np.append([0],Phase)              # das wird ned funktioneren, eher concat
+                else:
+                    intersections = 0
+                    for t in range(numberInter[s]):
+                        triIndex = int(interTri[t+ triCounter])
+                        v1 = lc[triangles[triIndex,0]]
+                        v2 = lc[triangles[triIndex,1]]
+                        v3 = lc[triangles[triIndex,2]]
+                        v1 = v1[2]
+                        v2 = v2[2]
+                        v3 = v3[2]
+                        triCounter +=1
+                        if interTRiangleFast(v1,v2,v3, zVals[p]) == True:
+                            intersections += 1
+                        else:
+                            continue
+                    if intersections % 2 == 0:
+                        Phase = np.append([0], Phase)
+                    else:
+                        Phase = np.append([1],Phase)
+                        print("ich stehe nur hier damit der code kompiliert ;)" )
+    return Phase
 
 
 
@@ -199,7 +235,6 @@ from matplotlib.path import Path as Pt
 import matplotlib.patches as patches
 import math
 import sys,os
-#import ipdb
 import scipy as sc
 from scipy import interpolate
 from numba import jit
@@ -317,12 +352,11 @@ def OpenVolumeTest(inFile, nInter, nPrec, grid):
         
     #mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
     #np.save("surf",mesh1)
-    Phase = mainTest(triangles, lc, grid)
-    
+    #Phase = mainTest(triangles, lc, grid)
+    Phase = fastRay(triangles, lc, grid)
     
     return Phase
 
-# from scipy.spatial import ConvexHull, convex_hull_plot_2d,Delaunay 
     
 
 
