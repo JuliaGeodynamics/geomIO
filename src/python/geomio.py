@@ -41,8 +41,64 @@ from create_STL_surface import *
 
 #os.chdir("..")
 
+def getPoints2D(inFile, nPrec):
+    
+    data = readSVG(inFile)
+    x = data.Curves
+
+    Ref = np.array([])
+    Coordinates = np.array([])
+    lP = np.array([])
+    t = np.linspace(0,1, nPrec)
+    it = 0
+
+    for i in range(len(x)):
+        if data.Commented[i]:
+                    
+            cPoints = list()
+            line = x[i]  
+            points = controlPoints(line)
+            cPoints.append(points)
+
+            for r in range(len(cPoints)):
+                for p in range(len(cPoints[r])):
+                    seg = cPoints[r][p]
+                    for s in range(nPrec):
+                        B = deCastel(seg,t[s])
+
+                        Ref = np.append([B],Ref)
+            
+        else:
+
+            cPoints = list()
+            line = x[i]  
+            points = controlPoints(line)
+            cPoints.append(points)
 
 
+            for r in range(len(cPoints)):
+                for p in range(len(cPoints[r])):
+                    seg = cPoints[r][p]
+                    for s in range(nPrec):
+                        B = deCastel(seg,t[s])
+                        it += len(B)
+
+                        Coordinates = np.append([B],Coordinates)
+
+        lP = np.append([it],lP)         
+                
+    newshape = int(len(Ref)/2)
+    Ref = np.reshape(Ref,(newshape,2))
+
+    newshape = int(len(Coordinates)/2)
+    Coordinates = np.reshape(Coordinates,(newshape,2))
+    lP = lP/2
+
+
+    return Ref,Coordinates,lP
+
+
+"""
 
 def getPoints2D(inFile, nPrec):
     
@@ -75,6 +131,7 @@ def getPoints2D(inFile, nPrec):
     newshape = int(len(Coordinates)/2)
     Coordinates = np.reshape(Coordinates,(newshape,2))
     return Coordinates
+"""
 
 
 def scaling():

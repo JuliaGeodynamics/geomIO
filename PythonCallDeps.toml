@@ -1,5 +1,5 @@
 [conda]
-packages = ["python=3.6","svgpathtools","numpy-stl","matplotlib","scipy","ipdb","vtk"]
+packages = ["python=3.6","svgpathtools","numpy-stl","matplotlib","scipy","ipdb","vtk","numba"]
 channels = ["conda-forge"]
 
 [pip]
