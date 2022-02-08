@@ -127,15 +127,28 @@ def interTRiangleFast(v1,v2,v3, zVal):
         return False
 
 
+def sortGrid(grid):
+    
+    
+    
+    return
+
 def fastRay(triangles, lc, grid):
+    
+    
     
     Phase = np.array([])
     zVals = np.unique(grid[2,:]) 
     Layers = len(np.unique(grid[2,:]))                     # number of different z coordinates
     numPoints = np.unique(grid[2,:], return_counts = True)[1][0]  # number of points per layer
     # I need every 56th(layers) x and y coordinate better have function that determines this
-    x = grid[0,:])
-    y = grid[1,:])
+    x = np.array([])
+    y = np.array([])
+    #count = 0
+    for s in range(int(len(grid[0,:])/Layers)):
+        x = np.append([x],grid[0,s*Layers])
+        y = np.append([y],grid[0,s*Layers])
+
     points = np.concatenate((x,y))
     #points = np.array([[grid[0,0:Layers], grid[1,0:Layers]]])     # x and y coordinates of these cells
     numPoints = points.size                                 # number of cells per z coordinate
@@ -184,6 +197,7 @@ def fastRay(triangles, lc, grid):
                         Phase = np.append([0], Phase)
                     else:
                         Phase = np.append([1],Phase)
+                        
                         print("ich stehe nur hier damit der code kompiliert ;)" )
     return Phase
 
