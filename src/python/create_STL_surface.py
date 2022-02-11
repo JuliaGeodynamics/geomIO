@@ -9,7 +9,7 @@ import math
 import sys,os
 import scipy as sc
 from scipy import interpolate
-from numba import jit
+#from numba import jit
 
 
 #@jit(nopython=True) 

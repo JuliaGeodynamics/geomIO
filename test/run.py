@@ -22,7 +22,8 @@ numInterLayers = 4
 nPrec = 40
 #print(os.getcwd())
 
-grid = np.load("grid.npy")*1e3
+grid = np.load("grid.npy")
+
 
 #coors = geomio.getPoints2D(inFile,nPrec)
 #mode bin or asc
@@ -30,6 +31,7 @@ grid = np.load("grid.npy")*1e3
 #geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
 #plot the pointcloud. requiers open3d
 Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
+np.save("Phase.npy"Phase)
 #np.save("phase.npy", Phase)
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)
 #l,nl = geomio.getLayers(inFile)

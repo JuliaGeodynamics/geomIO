@@ -78,6 +78,8 @@ def insideTriangle2D(point, vertices):
     b = vertices[1]
     c = vertices[2]
     xd = np.cross(a,b) + np.cross(b,c) + np.cross(c,a)
+    if xd ==0:
+        xd+=0.00001
     
     xa = np.cross(b,c) + np.cross(point, b-c)
     xb = np.cross(c,a) + np.cross(point, c-a)
@@ -137,7 +139,6 @@ def fastRay(triangles, lc, grid):
     
     
     
-    Phase = np.array([])
     zVals = np.unique(grid[2,:]) 
     Layers = len(np.unique(grid[2,:]))                     # number of different z coordinates
     numPoints = np.unique(grid[2,:], return_counts = True)[1][0]  # number of points per layer
@@ -147,41 +148,46 @@ def fastRay(triangles, lc, grid):
     #count = 0
     for s in range(int(len(grid[0,:])/Layers)):
         x = np.append([x],grid[0,s*Layers])
-        y = np.append([y],grid[0,s*Layers])
+        y = np.append([y],grid[1,s*Layers])
 
     points = np.concatenate((x,y))
+    points = np.reshape(points,(int(len(points)/2),2),'F')
     #points = np.array([[grid[0,0:Layers], grid[1,0:Layers]]])     # x and y coordinates of these cells
-    numPoints = points.size                                 # number of cells per z coordinate
+    numPoints = len(points)                               # number of cells per z coordinate
     #inter = np.zeros_like(points)                          # number of intersections with trianglew
-    numberInter = np.zeros_like(points)                     # number of intersections with triangles
+    numberInter = np.zeros(numPoints)                     # number of intersections with triangles
     interTri = np.array([])                                 # index wich traingles are inntersected
     
-    for i in range(len(points)):                            # check all x  and y coordinates for intersection
+    for i in range(numPoints):
+        print("Computing 2D for column" + str(i))                            # check all x  and y coordinates for intersection
         for p in range(len(triangles)):                 
                 v1 = lc[triangles[p,0]]
                 v2 = lc[triangles[p,1]]
                 v3 = lc[triangles[p,2]]
                 vertex = np.array([[v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]]])
-                if insideTriangle2D:
+                if insideTriangle2D(points[i,:], vertex):
                     #inter[i]= 1
                     numberInter[i] +=1                      # count the intersections
                     interTri = np.append([p], interTri)     # save the index to triangle that intersects
                 else:
                     continue
+    print("intersection 2D completed")
     triCounter = 0
+    Phase = np.array([])
 
-    ph = np.zeros(numPoints)                             # test for all coordinates
+                            # test for all coordinates
     for s in range(numPoints):
-         
-       
-            for p in range(numZ):
+               
+            print("computing for column" + str(s))
+            for p in range(Layers):
+                
                 if numberInter[s] ==0:                          # if no intersection whole column will be ignored
             
                     Phase = np.append([0],Phase)              # das wird ned funktioneren, eher concat
                 else:
                     intersections = 0
                     for t in range(numberInter[s]):
-                        triIndex = int(interTri[t+ triCounter])
+                        triIndex = int(interTri[triCounter])
                         v1 = lc[triangles[triIndex,0]]
                         v2 = lc[triangles[triIndex,1]]
                         v3 = lc[triangles[triIndex,2]]
@@ -198,7 +204,7 @@ def fastRay(triangles, lc, grid):
                     else:
                         Phase = np.append([1],Phase)
                         
-                        print("ich stehe nur hier damit der code kompiliert ;)" )
+                        #print("ich stehe nur hier damit der code kompiliert ;)" )
     return Phase
 
 
@@ -251,7 +257,7 @@ import math
 import sys,os
 import scipy as sc
 from scipy import interpolate
-from numba import jit
+#from numba import jit
 
 class Tri(object):
     
