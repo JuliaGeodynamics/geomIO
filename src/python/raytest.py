@@ -127,6 +127,38 @@ def interTRiangleFast(v1,v2,v3, zVal):
         return True
     else:
         return False
+    
+def createPlane(p,q,r):
+    
+    PQ = q-p
+    PR = r-p
+    OP = p
+    a = np.asanyarray([PQ,PR,OP])
+    b = np.array([2,2,2])
+    normal = np.cross(PQ,PR)
+    d = np.dot(normal, OP)
+    
+    
+    
+    return normal, d
+
+def upperTest(v1,v2,v3, zVal):
+    
+    Coor, d = createPlane(v1,v2,v3)
+    r = ((d - zVal[0]*Coor[0]-zVal[1]*Coor[1])/Coor[2])-zVal[2]
+    InterPoint = zVal+r*np.array([0,0,1])
+    
+    
+    
+    return InterPoint[2]
+
+
+a = np.array([1,2,8])
+b = np.array([8,10,12])
+c = np.array([10,1,12])
+
+bottom = np.array([3,5,0])
+upperTest(a,b,c,bottom)
 
 
 def sortGrid(grid):
@@ -139,7 +171,8 @@ def fastRay(triangles, lc, grid):
     
     
     
-    zVals = np.unique(grid[2,:]) 
+    zVals = np.unique(grid[2,:])
+    lowerBound = np.amin(zVals)
     Layers = len(np.unique(grid[2,:]))                     # number of different z coordinates
     numPoints = np.unique(grid[2,:], return_counts = True)[1][0]  # number of points per layer
     # I need every 56th(layers) x and y coordinate better have function that determines this
@@ -150,13 +183,14 @@ def fastRay(triangles, lc, grid):
         x = np.append([x],grid[0,s*Layers])
         y = np.append([y],grid[1,s*Layers])
 
-    points = np.concatenate((x,y))
-    points = np.reshape(points,(int(len(points)/2),2),'F')
+    points = np.stack((x,y), axis = 1)
+#    points = np.reshape(points,(int(len(points)/2),2),'C')
     #points = np.array([[grid[0,0:Layers], grid[1,0:Layers]]])     # x and y coordinates of these cells
     numPoints = len(points)                               # number of cells per z coordinate
     #inter = np.zeros_like(points)                          # number of intersections with trianglew
     numberInter = np.zeros(numPoints)                     # number of intersections with triangles
-    interTri = np.array([])                                 # index wich traingles are inntersected
+    interTri = np.array([])
+    InterPointZ = np.array([])                                 # index wich traingles are inntersected
     
     for i in range(numPoints):
         print("Computing 2D for column" + str(i))                            # check all x  and y coordinates for intersection
@@ -169,11 +203,13 @@ def fastRay(triangles, lc, grid):
                     #inter[i]= 1
                     numberInter[i] +=1                      # count the intersections
                     interTri = np.append([p], interTri)     # save the index to triangle that intersects
+                    InterPointZ = np.append([upperTest(v1,v2,v3,np.array([points[i,0],points[i,1], lowerBound]))], InterPointZ)
                 else:
                     continue
     print("intersection 2D completed")
     triCounter = 0
     Phase = np.array([])
+    
 
                             # test for all coordinates
     for s in range(numPoints):
@@ -186,7 +222,7 @@ def fastRay(triangles, lc, grid):
                     Phase = np.append([0],Phase)              # das wird ned funktioneren, eher concat
                 else:
                     intersections = 0
-                    for t in range(numberInter[s]):
+                    for t in range(int(numberInter[s])):
                         triIndex = int(interTri[triCounter])
                         v1 = lc[triangles[triIndex,0]]
                         v2 = lc[triangles[triIndex,1]]
@@ -194,15 +230,21 @@ def fastRay(triangles, lc, grid):
                         v1 = v1[2]
                         v2 = v2[2]
                         v3 = v3[2]
-                        triCounter +=1
-                        if interTRiangleFast(v1,v2,v3, zVals[p]) == True:
+                        if zVals[p] <= InterPointZ[triCounter]:
                             intersections += 1
                         else:
                             continue
+                        # if interTRiangleFast(v1,v2,v3, zVals[p]) == True:
+                        #     intersections += 1
+                        # else:
+                        #     continue hier war btw der fehler weil hier kein counter lief
                     if intersections % 2 == 0:
                         Phase = np.append([0], Phase)
                     else:
                         Phase = np.append([1],Phase)
+            triCounter +=int(numberInter[s])
+                    
+
                         
                         #print("ich stehe nur hier damit der code kompiliert ;)" )
     return Phase
