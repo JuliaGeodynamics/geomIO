@@ -22,7 +22,7 @@ numInterLayers = 5
 nPrec = 12
 #print(os.getcwd())
 
-grid = np.load("grid.npy")
+#grid = np.load("grid.npy")
 
 
 #coors = geomio.getPoints2D(inFile,nPrec)

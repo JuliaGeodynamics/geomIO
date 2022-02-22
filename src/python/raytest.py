@@ -33,6 +33,11 @@ def sideOP(a, b):
     return operator
 
 def intersec(p1,p2,v1,v2,v3, eps = 0.1):
+    """
+    Uses pluecker Coordinate system to do determine line triangle intersection
+    currently unused
+    Documentation: https://members.loria.fr/SLazard/ARC-Visi3D/Pant-project/files/Line_Triangle.html
+    """
     
     line = line2Pl(p1,p2)
     l1 = line2Pl(v1,v2)
@@ -129,7 +134,11 @@ def interTRiangleFast(v1,v2,v3, zVal):
         return False
     
 def createPlane(p,q,r):
-    
+    """
+    Creates a plane in Coordinate form
+    ax + by +cz = d
+    where a,b,c are the components of the normal array and d is d
+    """    
     PQ = q-p
     PR = r-p
     OP = p
@@ -147,106 +156,93 @@ def upperTest(v1,v2,v3, zVal):
     Coor, d = createPlane(v1,v2,v3)
     r = ((d - zVal[0]*Coor[0]-zVal[1]*Coor[1])/Coor[2])-zVal[2]
     InterPoint = zVal+r*np.array([0,0,1])
-    
-    
-    
     return InterPoint[2]
 
 
-a = np.array([1,2,8])
-b = np.array([8,10,12])
-c = np.array([10,1,12])
 
-bottom = np.array([3,5,0])
-upperTest(a,b,c,bottom)
 
 
 def sortGrid(grid):
-    
-    
-    
     return
 
 def fastRay(triangles, lc, grid):
     
     
     
-    zVals = np.unique(grid[2,:])
-    lowerBound = np.amin(zVals)
-    Layers = len(np.unique(grid[2,:]))                     # number of different z coordinates
+    zVals = np.unique(grid[2,:])                                  # Different z values
+    lowerBound = np.amin(zVals)                                   # Z value of bottom Layer
+    Layers = len(np.unique(grid[2,:]))                            # number of different z coordinates
     numPoints = np.unique(grid[2,:], return_counts = True)[1][0]  # number of points per layer
-    # I need every 56th(layers) x and y coordinate better have function that determines this
+    
     x = np.array([])
     y = np.array([])
-    #count = 0
-    for s in range(int(len(grid[0,:])/Layers)):
+    
+    for s in range(int(len(grid[0,:])/Layers)):                   # Allocating the x coordinates
         x = np.append([x],grid[0,s*Layers])
         y = np.append([y],grid[1,s*Layers])
 
     points = np.stack((x,y), axis = 1)
-#    points = np.reshape(points,(int(len(points)/2),2),'C')
-    #points = np.array([[grid[0,0:Layers], grid[1,0:Layers]]])     # x and y coordinates of these cells
-    numPoints = len(points)                               # number of cells per z coordinate
-    #inter = np.zeros_like(points)                          # number of intersections with trianglew
+
+    numPoints = len(points)                               # number of cells per Layer
     numberInter = np.zeros(numPoints)                     # number of intersections with triangles
-    interTri = np.array([])
-    InterPointZ = np.array([])                                 # index wich traingles are inntersected
+    interTri = np.array([])                               # index wich traingles are inntersected
+    InterPointZ = np.array([])                            # Z coordinate of 3D intersection Point     
     
     for i in range(numPoints):
-        print("Computing 2D for column" + str(i))                            # check all x  and y coordinates for intersection
+        print("Computing 2D for column" + str(i))         # check all x  and y coordinates for intersection
         for p in range(len(triangles)):                 
                 v1 = lc[triangles[p,0]]
                 v2 = lc[triangles[p,1]]
                 v3 = lc[triangles[p,2]]
-                vertex = np.array([[v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]]])
-                if insideTriangle2D(points[i,:], vertex):
-                    #inter[i]= 1
-                    numberInter[i] +=1                      # count the intersections
+                vertex = np.array([[v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]]]) # transforming the triangle vertices into 2D
+                if insideTriangle2D(points[i,:], vertex):                         # Use barycentric weights to check intersection
+                    
+                    numberInter[i] +=1                      # count the triangles a point intersects
                     interTri = np.append([p], interTri)     # save the index to triangle that intersects
+                    # Save the Z coordinate of the intersection Point on the triangle
                     InterPointZ = np.append([upperTest(v1,v2,v3,np.array([points[i,0],points[i,1], lowerBound]))], InterPointZ)
                 else:
                     continue
     print("intersection 2D completed")
-    triCounter = 0
-    Phase = np.array([])
+    triCounter = 0 # used to count indeces for InterTri and InterPointZ
+    Phase = np.array([]) # Phase array(comes flattend)
     
 
-                            # test for all coordinates
-    for s in range(numPoints):
+                            
+    for s in range(numPoints):  # test for all coordinates
                
             print("computing for column" + str(s))
             for p in range(Layers):
                 
-                if numberInter[s] ==0:                          # if no intersection whole column will be ignored
+                if numberInter[s] ==0:                        # if no intersection whole column will be ignored
             
-                    Phase = np.append([0],Phase)              # das wird ned funktioneren, eher concat
+                    Phase = np.append([0],Phase)              # Add zeros for every cell with no intersection
                 else:
-                    intersections = 0
+                    intersections = 0                         # Count number of total intersections
                     for t in range(int(numberInter[s])):
-                        triIndex = int(interTri[triCounter])
-                        v1 = lc[triangles[triIndex,0]]
-                        v2 = lc[triangles[triIndex,1]]
-                        v3 = lc[triangles[triIndex,2]]
-                        v1 = v1[2]
-                        v2 = v2[2]
-                        v3 = v3[2]
-                        if zVals[p] <= InterPointZ[triCounter]:
-                            intersections += 1
+                        # triIndex = int(interTri[triCounter])  # Call the triangle that intersects
+                        # v1 = lc[triangles[triIndex,0]]        # Get its coordinates
+                        # v2 = lc[triangles[triIndex,1]]        # this is completely redundant
+                        # v3 = lc[triangles[triIndex,2]]
+                        # v1 = v1[2]
+                        # v2 = v2[2]
+                        # v3 = v3[2]
+                        if zVals[p] <= InterPointZ[triCounter]: # get the Z elevation of the intersection point and see 
+                            intersections += 1                  # wether is underneath the surface or not
                         else:
                             continue
                         # if interTRiangleFast(v1,v2,v3, zVals[p]) == True:
                         #     intersections += 1
                         # else:
                         #     continue hier war btw der fehler weil hier kein counter lief
-                    if intersections % 2 == 0:
+                    if intersections % 2 == 0:                  # if even number of intersections point is above surface 
                         Phase = np.append([0], Phase)
                     else:
-                        Phase = np.append([1],Phase)
-            triCounter +=int(numberInter[s])
+                        Phase = np.append([1],Phase)            # else it is underneath
+            triCounter +=int(numberInter[s])                    # update indices
                     
 
-                        
-                        #print("ich stehe nur hier damit der code kompiliert ;)" )
+                    
     return Phase
 
 
