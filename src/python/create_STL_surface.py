@@ -13,7 +13,7 @@ from scipy import interpolate
 
 
 #@jit(nopython=True) 
-def indexingOpen(Layers, numLayers, lc, nInter):
+def indexingOpen(numLayers, lc, nInter):
     nQuads = nInter+numLayers -1 # number of quads to be split in two triangles
     tri1 = np.array([])#first set of quadhalfs
     tri2 = np.array([])#second set of quadhalfs
@@ -98,15 +98,15 @@ def triNormals(tri,lc):
         norm = np.cross(p2-p1, p3-p1)
         normals[i,:] = norm
     return normals
-def triSurfOpen(inFile, nInter, nPrec):
+def triSurfOpen(lc, numLayers, nInter, nPrec):
     """
     surface triangulation for open surfaces
     """
-    Layers, numLayers = getLayers(inFile)
+    #Layers, numLayers = getLayers(inFile)
     
-    lc = getCarthesian(inFile,nInter,nPrec) # get coordinates
+    #lc = getCarthesian(inFile,nInter,nPrec) # get coordinates
     
-    m1, t = indexingOpen(Layers, numLayers, lc, nInter)
+    m1, t = indexingOpen(numLayers, lc, nInter)
     
     return m1, t
     
@@ -196,12 +196,12 @@ def triangulateCover(lc):
     
     return  mesh, triangles
 
-def triSurfClose(inFile, nInter, nPrec):
+def triSurfClose(lc, numLayers, nInter, nPrec):
     """
     surface triangulation for closed volumes
     """
-    Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(inFile,nInter,nPrec)
+    #Layers, numLayers = getLayers(inFile)
+    #lc = getCarthesian(inFile,nInter,nPrec)
 
     nQuads = nInter+numLayers -1
     tri1 = np.array([])
@@ -302,7 +302,7 @@ def triSurfClose(inFile, nInter, nPrec):
 
 
 
-def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "ASCII"):
+def wSTL(data, path, numInter, nPrec,name, volume = False, mode = "ASCII"):
     """
     placeholder function for writing stl files
     uses the lib np stl
@@ -311,13 +311,14 @@ def wSTL(inFile, numInter, nPrec,name, volume = False, mode = "ASCII"):
     import struct
     import stl
     from stl import mesh
+    lc = getCarthesian(data, path, numInter,nPrec)
+
     if volume:
-        triangles, face = triSurfClose(inFile,numInter,nPrec)
+        triangles, face = triSurfClose(lc,len(path), numInter,nPrec)
     else:
             
-        triangles, face = triSurfOpen(inFile,numInter,nPrec)
+        triangles, face = triSurfOpen(lc, len(path), numInter,nPrec)
     #nec for writing
-    lc = getCarthesian(inFile, numInter,nPrec)
     os.chdir("output")
     cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
     for i, f in enumerate(face):

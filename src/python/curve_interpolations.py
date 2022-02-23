@@ -15,6 +15,14 @@ import sys,os
 
 import scipy as sc
 
+def splitPaths(data, key:str):
+    paths = list()
+    for i in range(data.Curves):
+        if data.CurveNames[i] == key:
+            paths.append(data.Curves[i])
+            
+    return paths
+
 
 def getZvalues(inFile):  # obsolete
     """
@@ -128,7 +136,7 @@ def controlPoints(line):
     return cPoints
 
 
-def getCpoints(inFile):
+def getCpoints(data, path):
     """
     This function generates a list of quadratic bezier Controlpoints
     stored as bezier class for each layer and puts it toghter in a list
@@ -142,20 +150,29 @@ def getCpoints(inFile):
     cPoints : List of bezier segments per layer
 
     """
-    paths, attributes = svg2paths(inFile)
-    data = readSVG(inFile)
-    c = data.Curves
-    ###-----------hier rein basteln---------
+
+    
+    
+    # paths, attributes = svg2paths(inFile)
+    # data = readSVG(inFile)
+    # c = data.Curves
+    # ###-----------hier rein basteln---------
     cPoints = list()
-    ig  = ignore(inFile)
-    pathsR = list()
-    for r in range(len(ig)):
-        if ig[r]  == 0:
-            pathsR.append(paths[r])
-    for i in range(len(pathsR)):
-        line = pathsR[i]
+    # ig  = ignore(inFile)
+    # pathsR = list()
+    # for r in range(len(ig)):
+    #     if ig[r]  == 0:
+    #         pathsR.append(paths[r])
+    # for i in range(len(pathsR)):
+    #     line = pathsR[i]
+    #     points = controlPoints(line)
+    #     cPoints.append(points)
+    
+    for i in range(len(path)):
+        line = path[i]
         points = controlPoints(line)
         cPoints.append(points)
+    
     
     return cPoints
     
@@ -310,18 +327,22 @@ def interp(cPoints, zCoor, numPoints = 5, meth = 'linear'):
     return Segment 
     
     
-def interWrap(inFile, numInterLayers):
+def interWrap(data, path, numInterLayers):
     """
     Function to call interpolation,
     returns a list of all new controlpoints properly sorted as well as all 
     z coordinates
     
     """
-    zCoor = getZvalues(inFile)
+    #zCoor = getZvalues(inFile)
+
+    
+    zCoor = np.array(list(set(data.zCoord)))
+            
     
     idx, vals = compEmpty(zCoor, numInterLayers)
 
-    cPoints = getCpoints(inFile)
+    cPoints = getCpoints(data, path)
     interLayers= list()
 #terrible hardcoding bug
     bezier = list()
@@ -386,13 +407,13 @@ def deCastel(cPoints, t = 0.5):
 #numLayers is number of interpolation steps
 #bug with only 2 inter
 #
-def getCarthesian(inFile, numInterLayers, prec):
+def getCarthesian(data, path, numInterLayers, prec):
     """
     This function computes the coordinates for all
     the points in the pointcloud, prec being the number 
     of points to compute per bezier segment 
     """
-    cPoints, vals = interWrap(inFile, numInterLayers)
+    cPoints, vals = interWrap(data, path, numInterLayers)
 
     #print(cPoints)
     t = np.linspace(0,1, prec)

@@ -1,20 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
-
-
-# import np as np
-# import sys, os
-
-# from svglib.svglib import svg2rlg
-# from reportlab.graphics import renderPDF, renderPM
-# #import svgpathtools as pt
-# import math 
-
 
 # We need the following python packages for this to work:
 #
@@ -28,19 +12,16 @@ from matplotlib.path import Path as Pt
 import matplotlib.patches as patches
 import math
 import sys,os
-#import ipdb
+
 import scipy as sc
 from scipy import interpolate
 
-#import stlWrite
+
 from pointcloud_delaunay import *
 
 from read_svg import *
 from curve_interpolations import *
 from create_STL_surface import *
-
-#os.chdir("..")
-
 
 
 
@@ -84,18 +65,6 @@ def scaling():
     """
     return
     
-    
-    
-def plot_line(inp, tol):    # Obsolete?
-    #deprecated
-    
-    line = np.array(inp)#*tol
-     
-    #plt.plot(line[:, 0], line[:, 1], color='b')
-    
-    plt.scatter(line[:, 0], line[:, 1], s=5)
-
-
 
 
 def checkPath(attributes, Layers):  # Obsolete?
@@ -213,14 +182,6 @@ def rayTracing(inFile, numInter, nPrec, grid):
 
 
 
-
-
-
-#es ist halt wirklich die interpolation die von anfang bis end inter aber in der mitte ignoriert
-
-
-
-
 def getBounds(inFile, numInter, nPrec):
     """
     printing the min and ma boundaries of the mesh/volume
@@ -238,8 +199,6 @@ def getBounds(inFile, numInter, nPrec):
     return
 
 
-# dlnSC = Delaunay(lc)
-# hull = ConvexHull(lc)
 
 
 
@@ -262,7 +221,6 @@ def plotCloud3D(inFile,nInterLayers, nPrec):
     o3d.visualization.draw_geometries([pcd])
     return
 
-#plotCloud3D(inFile)
 
 def plotCas(curve, nPoints = 50):
     """
@@ -281,13 +239,6 @@ def plotCas(curve, nPoints = 50):
     plt.show()
 
     return
-
-#plotCas(SEG)
-
-
-
-
-import matplotlib.pyplot as plt
 
 
 def plotBezier(cPoints):
@@ -322,12 +273,20 @@ def plotBezier(cPoints):
 
 import time
 
-def geomioFront(inFile, numInterLayers, nPrec, name, volume = False, mode = "ASCII"):
+def geomioFront(inFile, numInterLayers, nPrec, name, volume = False, mode = "ASCII", xml: bool = False):
     
-    t1 = time.time()
-    wSTL(inFile, numInterLayers, nPrec, name, volume, mode)
-    t2 = time.time()
-    print(t2-t1)
+    data = readSVG(inFile)
+    if xml :
+        labels = set(data.CurveNames)
+        for i in range(labels):
+            paths = splitPaths(data, labels[i])
+            
+    else:
+        path = data.Curves 
+        #t1 = time.time()
+        wSTL(data, path, numInterLayers, nPrec, name, volume, mode)
+        #t2 = time.time()
+        #print(t2-t1)
     return
     
 
