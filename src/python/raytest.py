@@ -163,11 +163,6 @@ def upperTest(v1,v2,v3, zVal):
 
 
 def sortGrid(grid):
-    return
-
-def fastRay(triangles, lc, grid):
-    
-    
     
     zVals = np.unique(grid[2,:])                                  # Different z values
     lowerBound = np.amin(zVals)                                   # Z value of bottom Layer
@@ -182,6 +177,14 @@ def fastRay(triangles, lc, grid):
         y = np.append([y],grid[1,s*Layers])
 
     points = np.stack((x,y), axis = 1)
+    
+    return zVals, lowerBound, Layers, numPoints, points
+
+def fastRay(triangles, lc, grid):
+    
+    zVals, lowerBound, Layers, numPoints, points = sortGrid(grid)
+    
+
 
     numPoints = len(points)                               # number of cells per Layer
     numberInter = np.zeros(numPoints)                     # number of intersections with triangles

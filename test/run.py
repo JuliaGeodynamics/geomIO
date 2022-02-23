@@ -7,10 +7,10 @@ import geomio
 import numpy as np
 
 #name of the inputfile
-inFile = "input/livedemo.svg"
+inFile = "input/over.svg"
 
 #name of the stl file which will be generated
-name = 'fold7.stl'
+name = '2Layer".stl'
 
 #wether it is a closed volume or an open surface
 Volume = False
@@ -24,13 +24,13 @@ nPrec = 12
 
 #grid = np.load("grid.npy")
 
-
+data = geomio.readSVG(inFile)
 #coors = geomio.getPoints2D(inFile,nPrec)
 #mode bin or asc
 #calling the main function
 #geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume)
 #plot the pointcloud. requiers open3d
-Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
+#Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
 #np.save("Phase.npy",Phase)
 #np.save("phase.npy", Phase)
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)

@@ -331,6 +331,12 @@ def geomioFront(inFile, numInterLayers, nPrec, name, volume = False, mode = "ASC
     return
     
 
+def geomioMulitLayer(inFile, numInterLayers, nPrec, name, volume = False, mode = "ASCII"):
+    
+    
+    
+    return
+
 
 
 
