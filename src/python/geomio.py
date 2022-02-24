@@ -273,16 +273,20 @@ def plotBezier(cPoints):
 
 import time
 
-def geomioFront(inFile, numInterLayers, nPrec, name, volume = False, mode = "ASCII", xml: bool = False):
+def geomioFront(inFile:str, numInterLayers: int, nPrec: int, name:list, volume = False, mode = "ASCII", xml: bool = False):
     
     data = readSVG(inFile)
     if xml :
-        labels = set(data.CurveNames)
-        for i in range(labels):
-            paths = splitPaths(data, labels[i])
+        labels = list(set(data.CurveNames))
+        #name = list(labels)
+        for i in range(len(labels)):
+            name = str(labels[i])+ ".stl"
+            path = splitPaths(data, labels[i])
+            wSTL(data, path, numInterLayers, nPrec, name, volume, mode)
             
     else:
         path = data.Curves 
+        name = name[0]
         #t1 = time.time()
         wSTL(data, path, numInterLayers, nPrec, name, volume, mode)
         #t2 = time.time()

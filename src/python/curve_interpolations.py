@@ -17,7 +17,7 @@ import scipy as sc
 
 def splitPaths(data, key:str):
     paths = list()
-    for i in range(data.Curves):
+    for i in range(len(data.Curves)):
         if data.CurveNames[i] == key:
             paths.append(data.Curves[i])
             
