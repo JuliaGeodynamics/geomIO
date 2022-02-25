@@ -248,6 +248,77 @@ def fastRay(triangles, lc, grid):
                     
     return Phase
 
+from stl import mesh
+
+def fastRayFile(inFile, grid):
+    
+    zVals, lowerBound, Layers, numPoints, points = sortGrid(grid)
+    triangles = mesh.Mesh.from_file(inFile)
+
+
+    numPoints = len(points)                               # number of cells per Layer
+    numberInter = np.zeros(numPoints)                     # number of intersections with triangles
+    interTri = np.array([])                               # index wich traingles are inntersected
+    InterPointZ = np.array([])                            # Z coordinate of 3D intersection Point     
+    
+    for i in range(numPoints):
+        print("Computing 2D for column" + str(i))         # check all x  and y coordinates for intersection
+        for p in range(len(triangles)):                 
+                v1 = triangles.v0[p,:]
+                v2 = triangles.v1[p,:]
+                v3 = triangles.v2[p,:]
+                vertex = np.array([[v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]]]) # transforming the triangle vertices into 2D
+                if insideTriangle2D(points[i,:], vertex):                         # Use barycentric weights to check intersection
+                    
+                    numberInter[i] +=1                      # count the triangles a point intersects
+                    interTri = np.append([p], interTri)     # save the index to triangle that intersects
+                    # Save the Z coordinate of the intersection Point on the triangle
+                    InterPointZ = np.append([upperTest(v1,v2,v3,np.array([points[i,0],points[i,1], lowerBound]))], InterPointZ)
+                else:
+                    continue
+    print("intersection 2D completed")
+    triCounter = 0 # used to count indeces for InterTri and InterPointZ
+    Phase = np.array([]) # Phase array(comes flattend)
+    
+
+                            
+    for s in range(numPoints):  # test for all coordinates
+               
+            print("computing for column" + str(s))
+            for p in range(Layers):
+                
+                if numberInter[s] ==0:                        # if no intersection whole column will be ignored
+            
+                    Phase = np.append([0],Phase)              # Add zeros for every cell with no intersection
+                else:
+                    intersections = 0                         # Count number of total intersections
+                    for t in range(int(numberInter[s])):
+                        # triIndex = int(interTri[triCounter])  # Call the triangle that intersects
+                        # v1 = lc[triangles[triIndex,0]]        # Get its coordinates
+                        # v2 = lc[triangles[triIndex,1]]        # this is completely redundant
+                        # v3 = lc[triangles[triIndex,2]]
+                        # v1 = v1[2]
+                        # v2 = v2[2]
+                        # v3 = v3[2]
+                        if zVals[p] <= InterPointZ[triCounter]: # get the Z elevation of the intersection point and see 
+                            intersections += 1                  # wether is underneath the surface or not
+                        else:
+                            continue
+                        # if interTRiangleFast(v1,v2,v3, zVals[p]) == True:
+                        #     intersections += 1
+                        # else:
+                        #     continue hier war btw der fehler weil hier kein counter lief
+                    if intersections % 2 == 0:                  # if even number of intersections point is above surface 
+                        Phase = np.append([0], Phase)
+                    else:
+                        Phase = np.append([1],Phase)            # else it is underneath
+            triCounter +=int(numberInter[s])                    # update indices
+                    
+
+                    
+    return Phase
+    
+    
 
 
 #normalvektoren weg
@@ -344,13 +415,19 @@ def mainTest(triangles, lc, grid):
                     Phase[r]=1
     return Phase
 
+def fileTest(inFile, grid):
+    
+    
+    return
 
 def OpenVolumeTest(inFile, nInter, nPrec, grid):
     """
     surface triangulation for open surfaces
     """
+    data = readSVG(inFile)
+    path = data.Curves
     Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(inFile,nInter,nPrec)
+    lc = getCarthesian(data, path, nInter,nPrec)
 
     
     nQuads = nInter+numLayers -1

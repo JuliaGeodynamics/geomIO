@@ -6,8 +6,9 @@ sys.path.append(geomIOpath)
 import geomio
 import numpy as np
 
+from stl import mesh
 #name of the inputfile
-inFile = "input/over.svg"
+inFile = "input/livedemo.svg"
 
 #name of the stl file which will be generated
 name = ["2Layer.stl"]
@@ -21,16 +22,18 @@ numInterLayers = 5
 #number of points that are computed per bezier segment
 nPrec = 12
 #print(os.getcwd())
-
+#grid = np.array([])
 #grid = np.load("grid.npy")
+triangles = mesh.Mesh.from_file("output/fold.stl")
+
 
 data = geomio.readSVG(inFile)
 #coors = geomio.getPoints2D(inFile,nPrec)
 #mode bin or asc
 #calling the main function
-geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=True)
+#geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=True)
 #plot the pointcloud. requiers open3d
-#Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
+Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
 #np.save("Phase.npy",Phase)
 #np.save("phase.npy", Phase)
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)

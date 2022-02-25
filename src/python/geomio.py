@@ -174,6 +174,11 @@ def sortLayers(inFile): # Obsolete
 
 from raytest import *
 def rayTracing(inFile, numInter, nPrec, grid):
+    
+     
+        
+    if ".stl" in inFile:
+        sys.exit("stlParser not implemented")
 
     
     Phase = OpenVolumeTest(inFile, numInter, nPrec, grid)
