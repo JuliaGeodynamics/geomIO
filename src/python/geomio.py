@@ -25,37 +25,52 @@ from create_STL_surface import *
 
 
 
-def getPoints2D(inFile, nPrec):
-    
+def getPoints2D(inFile, nPrec, xml:bool = False):
+    numInter = 0
     data = readSVG(inFile)
-    x = data.Curves
-    cPoints = list()
-    for i in range(len(x)):
-        if data.Commented[i]:
-            continue
-        else:
-            
-            line = x[i]  
-            points = controlPoints(line)
-            cPoints.append(points)
-    t = np.linspace(0,1, nPrec)
-    Coordinates = np.array([])
+    Coors = list()
+    
+    if xml :
+        labels = list(data.CurveNames)
+        #name = list(labels)
+        for i in range(len(labels)):
+            name = str(labels[i])+ ".stl"
+            path = splitPaths(data, labels[i])
+            lc = getCarthesian(data, path, numInter,nPrec)
+            Coors.append(lc)
+    
+    
 
-    for r in range(len(cPoints)):
-        for p in range(len(cPoints[r])):
-            seg = cPoints[r][p]
-            for s in range(nPrec):
-                B = deCastel(seg,t[s])
+
+    
+    # x = data.Curves
+    # cPoints = list()
+    # for i in range(len(x)):
+    #     if data.Commented[i]:
+    #         continue
+    #     else:
+            
+    #         line = x[i]  
+    #         points = controlPoints(line)
+    #         cPoints.append(points)
+    # t = np.linspace(0,1, nPrec)
+    # Coordinates = np.array([])
+
+    # for r in range(len(cPoints)):
+    #     for p in range(len(cPoints[r])):
+    #         seg = cPoints[r][p]
+    #         for s in range(nPrec):
+    #             B = deCastel(seg,t[s])
                 
                  
                 
-                Coordinates = np.append([B],Coordinates)
+    #             Coordinates = np.append([B],Coordinates)
 
         
     
-    newshape = int(len(Coordinates)/2)
-    Coordinates = np.reshape(Coordinates,(newshape,2))
-    return Coordinates
+    # newshape = int(len(Coordinates)/2)
+    # Coordinates = np.reshape(Coordinates,(newshape,2))
+    return Coors, labels
 
 
 def scaling():
