@@ -152,7 +152,9 @@ def createPlane(p,q,r):
     return normal, d
 
 def upperTest(v1,v2,v3, zVal):
-    
+    """
+    https://abiturma.de/mathe-lernen/geometrie/lagebeziehungen-und-schnitt/schnitt-gerade-ebene
+    """
     Coor, d = createPlane(v1,v2,v3)
     r = ((d - zVal[0]*Coor[0]-zVal[1]*Coor[1])/Coor[2])-zVal[2]
     InterPoint = zVal+r*np.array([0,0,1])
@@ -163,11 +165,11 @@ def upperTest(v1,v2,v3, zVal):
 
 
 def sortGrid(grid):
-    
-    zVals = np.unique(grid[2,:])                                  # Different z values
+    #Z = np.reshape(grid[2,:],(8,10,12))
+    zVals = np.unique(grid[2,:])     # replace    zNew = Z[0,0,:]                         # Different z values
     lowerBound = np.amin(zVals)                                   # Z value of bottom Layer
-    Layers = len(np.unique(grid[2,:]))                            # number of different z coordinates
-    numPoints = np.unique(grid[2,:], return_counts = True)[1][0]  # number of points per layer
+    Layers = len(np.unique(grid[2,:])) #replace with nz                           # number of different z coordinates
+    numPoints = np.unique(grid[2,:], return_counts = True)[1][0]  # number of points per layer == nx * ny
     
     x = np.array([])
     y = np.array([])
@@ -180,7 +182,57 @@ def sortGrid(grid):
     
     return zVals, lowerBound, Layers, numPoints, points
 
+def interpretRegularGrid(triangles, lc, grid):
+    x,y,z = grid[0], grid[1], grid[2]
+    X,Y = x[:,:,0], y[:,:,0]
+    Z = z[0,0,:]
+    numberInter = np.zeros_like(X)
+    interTri = np.array([])
+    InterPointZ = np.array([])
+    for i in range(X.shape[0]):
+        for j in range(X.shape[1]):
+            print("computing cell " + str(i) +"," + str(j))
+            for p in range(len(triangles)):
+                             
+                v1 = lc[triangles[p,0]]
+                v2 = lc[triangles[p,1]]
+                v3 = lc[triangles[p,2]]
+                vertex = np.array([[v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]]]) # transforming the triangle vertices into 2D
+                if insideTriangle2D(np.array([X[i,j], Y[i,j]]), vertex):                         # Use barycentric weights to check intersection
+                    
+                    numberInter[i,j] +=1                      # count the triangles a point intersects
+                    interTri = np.append([p], interTri)     # save the index to triangle that intersects
+                       # Save the Z coordinate of the intersection Point on the triangle
+                    InterPointZ = np.append([upperTest(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))], InterPointZ)
+                else:
+                    continue
+    print("intersection 2D completed")
+    triCounter = 0 # used to count indeces for InterTri and InterPointZ
+    Phase = np.zeros_like(x) # Phase array(comes flattend)
+    for i in range(Phase.shape[0]):
+        for j in range(Phase.shape[1]):
+            if numberInter[i,j] == 0:
+                    Phase[i,j,:]= 0
+            else:
+                for k in range(Phase.shape[2]):
+                    intersections = 0  
+                    for t in range(int(numberInter[i,j])):
+                        if Z[k] <= InterPointZ[triCounter]: # get the Z elevation of the intersection point and see 
+                            intersections += 1  
+                    if intersections % 2 == 0: 
+                        Phase[i,j,k] = 0
+                    else:
+                        Phase[i,j,k] = 1
+                triCounter +=int(numberInter[i,j])  
+                        
+                            
+                        
+            
+    
+    return Phase
+
 def fastRay(triangles, lc, grid):
+    
     
     zVals, lowerBound, Layers, numPoints, points = sortGrid(grid)
     
@@ -192,7 +244,7 @@ def fastRay(triangles, lc, grid):
     InterPointZ = np.array([])                            # Z coordinate of 3D intersection Point     
     
     for i in range(numPoints):
-        print("Computing 2D for column" + str(i))         # check all x  and y coordinates for intersection
+        #print("Computing 2D for column" + str(i))         # check all x  and y coordinates for intersection
         for p in range(len(triangles)):                 
                 v1 = lc[triangles[p,0]]
                 v2 = lc[triangles[p,1]]
@@ -214,7 +266,7 @@ def fastRay(triangles, lc, grid):
                             
     for s in range(numPoints):  # test for all coordinates
                
-            print("computing for column" + str(s))
+            #print("computing for column" + str(s))
             for p in range(Layers):
                 
                 if numberInter[s] ==0:                        # if no intersection whole column will be ignored
@@ -250,7 +302,7 @@ def fastRay(triangles, lc, grid):
 
 from stl import mesh
 
-def fastRayFile(inFile, grid):
+def fastRayFile(inFile:str, grid):
     
     zVals, lowerBound, Layers, numPoints, points = sortGrid(grid)
     triangles = mesh.Mesh.from_file(inFile)
@@ -491,8 +543,8 @@ def OpenVolumeTest(inFile, nInter, nPrec, grid):
     #mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
     #np.save("surf",mesh1)
     #Phase = mainTest(triangles, lc, grid)
-    Phase = fastRay(triangles, lc, grid)
-    
+    #Phase = fastRay(triangles, lc, grid)
+    Phase = interpretRegularGrid(triangles,lc,grid)
     return Phase
 
     

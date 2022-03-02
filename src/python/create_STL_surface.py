@@ -325,6 +325,7 @@ def wSTL(data, path, numInter, nPrec,name, volume = False, mode = "ASCII"):
         for j in range(3):
             cube.vectors[i][j] = lc[f[j],:]
     
+    print("Saved file " + str(name) + " to directory:")
     print(os.getcwd())
     #Write the mesh to file "cube.stl"
     if mode == "ASCII":

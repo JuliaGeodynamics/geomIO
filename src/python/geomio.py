@@ -26,7 +26,7 @@ from create_STL_surface import *
 
 
 def getPoints2D(inFile, nPrec, xml:bool = False):
-    numInter = 0
+    numInter = 1
     data = readSVG(inFile)
     Coors = list()
     
@@ -188,7 +188,7 @@ def sortLayers(inFile): # Obsolete
     return 
 
 from raytest import *
-def rayTracing(inFile, numInter, nPrec, grid):
+def rayTracing(inFile: str, numInter: int, nPrec:int, grid):
     
      
         
@@ -293,16 +293,16 @@ def plotBezier(cPoints):
 
 import time
 
-def geomioFront(inFile:str, numInterLayers: int, nPrec: int, name:list, volume = False, mode = "ASCII", xml: bool = False):
+def geomioFront(inFile:str, numInterLayers: int, nPrec: int, name:list, volume:bool = False, mode:str = "ASCII", xml: bool = False):
     
     data = readSVG(inFile)
     if xml :
         labels = list(set(data.CurveNames))
         #name = list(labels)
         for i in range(len(labels)):
-            name = str(labels[i])+ ".stl"
+            #name = str(labels[i]) + ".stl"
             path = splitPaths(data, labels[i])
-            wSTL(data, path, numInterLayers, nPrec, name, volume, mode)
+            wSTL(data, path, numInterLayers, nPrec, str(name[i]), volume, mode)
             
     else:
         path = data.Curves 

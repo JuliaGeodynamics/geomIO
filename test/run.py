@@ -5,37 +5,50 @@ geomIOpath = os.path.join(fpath, '../src/python')
 sys.path.append(geomIOpath)
 import geomio
 import numpy as np
-
+import time as t
 from stl import mesh
 #name of the inputfile
-inFile = "input/over.svg"
+inFile = "input/livedemo.svg"
 
 #name of the stl file which will be generated
-name = ["2Layer.stl"]
+name = ["fold.stl"]#, "salt.stl"]
 
 #wether it is a closed volume or an open surface
 Volume = False
 
 #how many layers are interpolated in total
-numInterLayers = 5
+numInterLayers = 3
 
 #number of points that are computed per bezier segment
-nPrec = 12
+nPrec = 4
 #print(os.getcwd())
 #grid = np.array([])
 #grid = np.load("grid.npy")
 #triangles = mesh.Mesh.from_file("output/fold.stl")
+import pickle
+
+with open("grid.pk1", 'rb') as inp:
+    grid = pickle.load(inp)
+x,y,z = grid[0], grid[1], grid[2]
+
+#X,Y,Z = x[:,0,0], y[0,:,0], z[0,0,:]
+X, Y = x[:,:,0], y[:,:,0]
 
 
-data = geomio.readSVG(inFile)
-c,l =geomio.getPoints2D(inFile, nPrec, True)
+#data = geomio.readSVG(inFile)
+#c,l =geomio.getPoints2D(inFile, nPrec, True)
 #coors = geomio.getPoints2D(inFile,nPrec)
 #mode bin or asc
 #calling the main function
 #geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=True)
+
+#t1 = t.time()
+Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
+
+#t2 = t.time()
+#print(t2-t1)
 #plot the pointcloud. requiers open3d
-#Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
-#np.save("Phase.npy",Phase)
+np.save("Phase.npy",Phase)
 #np.save("phase.npy", Phase)
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)
 #l,nl = geomio.getLayers(inFile)
