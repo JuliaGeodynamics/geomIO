@@ -26,8 +26,8 @@ nPrec = 4
 #grid = np.load("grid.npy")
 #triangles = mesh.Mesh.from_file("output/fold.stl")
 import pickle
-
-with open("grid.pk1", 'rb') as inp:
+#os.chdir('/home/lucas/Desktop/pymarkers')
+with open("gridL.pk1", 'rb') as inp:
     grid = pickle.load(inp)
 x,y,z = grid[0], grid[1], grid[2]
 
@@ -41,13 +41,14 @@ X, Y = x[:,:,0], y[:,:,0]
 #mode bin or asc
 #calling the main function
 #geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=True)
-
+#os.chdir('/home/lucas/Desktop/geomIO/test')
 #t1 = t.time()
 Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
 
 #t2 = t.time()
 #print(t2-t1)
 #plot the pointcloud. requiers open3d
+#os.chdir('/home/lucas/Desktop/pymarkers')
 np.save("Phase.npy",Phase)
 #np.save("phase.npy", Phase)
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)

@@ -186,12 +186,18 @@ def interpretRegularGrid(triangles, lc, grid):
     x,y,z = grid[0], grid[1], grid[2]
     X,Y = x[:,:,0], y[:,:,0]
     Z = z[0,0,:]
+    Phase = np.zeros_like(x) # Phase array(comes notflattend)
+
+    nnx, nny, nnz = Phase.shape[0]-1,Phase.shape[1]-1,Phase.shape[2]-1
+
     numberInter = np.zeros_like(X)
     interTri = np.array([])
     InterPointZ = np.array([])
-    for i in range(X.shape[0]):
-        for j in range(X.shape[1]):
+    #numberInter = np.array([])
+    for i in range(Phase.shape[0]):
+        for j in range(Phase.shape[1]):
             print("computing cell " + str(i) +"," + str(j))
+            
             for p in range(len(triangles)):
                              
                 v1 = lc[triangles[p,0]]
@@ -206,24 +212,40 @@ def interpretRegularGrid(triangles, lc, grid):
                     InterPointZ = np.append([upperTest(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))], InterPointZ)
                 else:
                     continue
+            # if numberInter == 0:
+            #     Phase[i,j,:] = 0
+            # else:
+            #     for k in range(Phase.shape[2]):
+            #         intersections = 0  
+            #         for t in range(int(numberInter)):
+            #             if Z[k] <= InterPointZ[triCounter]: # get the Z elevation of the intersection point and see 
+            #                 intersections += 1  
+            #         if intersections % 2 == 0: 
+            #             Phase[i, j,k] = 0
+            #         else:
+            #             Phase[i,j,k] = 1
+            #     triCounter +=int(numberInter)  
+
+                
+                    
     print("intersection 2D completed")
     triCounter = 0 # used to count indeces for InterTri and InterPointZ
-    Phase = np.zeros_like(x) # Phase array(comes flattend)
-    for i in range(Phase.shape[0]):
-        for j in range(Phase.shape[1]):
-            if numberInter[i,j] == 0:
-                    Phase[i,j,:]= 0
+    for nx in range(Phase.shape[0]):
+        for ny in range(Phase.shape[1]):
+            if numberInter[nx,ny] == 0:
+                    Phase[nx,ny,:]= 0
             else:
-                for k in range(Phase.shape[2]):
+                for nz in range(Phase.shape[2]):
                     intersections = 0  
-                    for t in range(int(numberInter[i,j])):
-                        if Z[k] <= InterPointZ[triCounter]: # get the Z elevation of the intersection point and see 
+                    for t in range(int(numberInter[nx,ny])):
+                        if Z[nz] <= InterPointZ[triCounter+t]: # get the Z elevation of the intersection point and see 
                             intersections += 1  
                     if intersections % 2 == 0: 
-                        Phase[i,j,k] = 0
+                        Phase[nx, ny,nz] = 0
                     else:
-                        Phase[i,j,k] = 1
-                triCounter +=int(numberInter[i,j])  
+                        Phase[nx,ny,nz] = 1
+                triCounter +=int(numberInter[nx,ny])  
+    #Phase[:,:,0] = numberInter[:,:]
                         
                             
                         
