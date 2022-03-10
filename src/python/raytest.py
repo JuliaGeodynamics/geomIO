@@ -164,39 +164,24 @@ def upperTest(v1,v2,v3, zVal):
 
 
 
-def sortGrid(grid):
-    #Z = np.reshape(grid[2,:],(8,10,12))
-    zVals = np.unique(grid[2,:])     # replace    zNew = Z[0,0,:]                         # Different z values
-    lowerBound = np.amin(zVals)                                   # Z value of bottom Layer
-    Layers = len(np.unique(grid[2,:])) #replace with nz                           # number of different z coordinates
-    numPoints = np.unique(grid[2,:], return_counts = True)[1][0]  # number of points per layer == nx * ny
-    
-    x = np.array([])
-    y = np.array([])
-    
-    for s in range(int(len(grid[0,:])/Layers)):                   # Allocating the x coordinates
-        x = np.append([x],grid[0,s*Layers])
-        y = np.append([y],grid[1,s*Layers])
 
-    points = np.stack((x,y), axis = 1)
+def rayTracingRectilinear(triangles, lc, grid):
     
-    return zVals, lowerBound, Layers, numPoints, points
-
-def interpretRegularGrid(triangles, lc, grid):
+    
     x,y,z = grid[0], grid[1], grid[2]
     X,Y = x[:,:,0], y[:,:,0]
     Z = z[0,0,:]
     Phase = np.zeros_like(x) # Phase array(comes notflattend)
 
-    nnx, nny, nnz = Phase.shape[0]-1,Phase.shape[1]-1,Phase.shape[2]-1
+    nx, ny, nz = Phase.shape[0],Phase.shape[1],Phase.shape[2]
 
     numberInter = np.zeros_like(X)
-    interTri = np.array([])
+    #interTri = np.array([])
     InterPointZ = np.array([])
     #numberInter = np.array([])
-    for i in range(Phase.shape[0]):
-        for j in range(Phase.shape[1]):
-            print("computing cell " + str(i) +"," + str(j))
+    for j in range(ny):
+        for i in range(nx):
+            print("computing cell " + "x " + str(i) +", y " + str(j))
             
             for p in range(len(triangles)):
                              
@@ -207,120 +192,53 @@ def interpretRegularGrid(triangles, lc, grid):
                 if insideTriangle2D(np.array([X[i,j], Y[i,j]]), vertex):                         # Use barycentric weights to check intersection
                     
                     numberInter[i,j] +=1                      # count the triangles a point intersects
-                    interTri = np.append([p], interTri)     # save the index to triangle that intersects
+                    #interTri = np.append([p], interTri)     # save the index to triangle that intersects
                        # Save the Z coordinate of the intersection Point on the triangle
+                       #test 
+                    SecPoint =upperTest(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))
                     InterPointZ = np.append([upperTest(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))], InterPointZ)
+                    #print(SecPoint)
                 else:
                     continue
-            # if numberInter == 0:
-            #     Phase[i,j,:] = 0
-            # else:
-            #     for k in range(Phase.shape[2]):
-            #         intersections = 0  
-            #         for t in range(int(numberInter)):
-            #             if Z[k] <= InterPointZ[triCounter]: # get the Z elevation of the intersection point and see 
-            #                 intersections += 1  
-            #         if intersections % 2 == 0: 
-            #             Phase[i, j,k] = 0
-            #         else:
-            #             Phase[i,j,k] = 1
-            #     triCounter +=int(numberInter)  
+
 
                 
-                    
+    InterPointZ = np.flip(InterPointZ)            
     print("intersection 2D completed")
-    triCounter = 0 # used to count indeces for InterTri and InterPointZ
-    for nx in range(Phase.shape[0]):
-        for ny in range(Phase.shape[1]):
-            if numberInter[nx,ny] == 0:
-                    Phase[nx,ny,:]= 0
-            else:
-                for nz in range(Phase.shape[2]):
-                    intersections = 0  
-                    for t in range(int(numberInter[nx,ny])):
-                        if Z[nz] <= InterPointZ[triCounter+t]: # get the Z elevation of the intersection point and see 
-                            intersections += 1  
-                    if intersections % 2 == 0: 
-                        Phase[nx, ny,nz] = 0
+     # used to count indeces for InterTri and InterPointZ
+     #test with more intersection(flip current file by 90°)
+    for k in range(nz):
+        triIdx = 0
+        for j in range(ny):
+            
+                for i in range(nx):
+                    #print("computing cell " + "x " + str(i) +", y " + str(j))
+                    #print(triIdx)
+                    
+                    
+                    if numberInter[i,j] == 0:
+                        Phase[i,j,k]= 0
                     else:
-                        Phase[nx,ny,nz] = 1
-                triCounter +=int(numberInter[nx,ny])  
-    #Phase[:,:,0] = numberInter[:,:]
-                        
-                            
-                        
-            
-    
-    return Phase
-
-def fastRay(triangles, lc, grid):
-    
-    
-    zVals, lowerBound, Layers, numPoints, points = sortGrid(grid)
-    
-
-
-    numPoints = len(points)                               # number of cells per Layer
-    numberInter = np.zeros(numPoints)                     # number of intersections with triangles
-    interTri = np.array([])                               # index wich traingles are inntersected
-    InterPointZ = np.array([])                            # Z coordinate of 3D intersection Point     
-    
-    for i in range(numPoints):
-        #print("Computing 2D for column" + str(i))         # check all x  and y coordinates for intersection
-        for p in range(len(triangles)):                 
-                v1 = lc[triangles[p,0]]
-                v2 = lc[triangles[p,1]]
-                v3 = lc[triangles[p,2]]
-                vertex = np.array([[v1[0], v1[1]],[v2[0], v2[1]],[v3[0], v3[1]]]) # transforming the triangle vertices into 2D
-                if insideTriangle2D(points[i,:], vertex):                         # Use barycentric weights to check intersection
-                    
-                    numberInter[i] +=1                      # count the triangles a point intersects
-                    interTri = np.append([p], interTri)     # save the index to triangle that intersects
-                    # Save the Z coordinate of the intersection Point on the triangle
-                    InterPointZ = np.append([upperTest(v1,v2,v3,np.array([points[i,0],points[i,1], lowerBound]))], InterPointZ)
-                else:
-                    continue
-    print("intersection 2D completed")
-    triCounter = 0 # used to count indeces for InterTri and InterPointZ
-    Phase = np.array([]) # Phase array(comes flattend)
-    
-
-                            
-    for s in range(numPoints):  # test for all coordinates
-               
-            #print("computing for column" + str(s))
-            for p in range(Layers):
-                
-                if numberInter[s] ==0:                        # if no intersection whole column will be ignored
-            
-                    Phase = np.append([0],Phase)              # Add zeros for every cell with no intersection
-                else:
-                    intersections = 0                         # Count number of total intersections
-                    for t in range(int(numberInter[s])):
-                        # triIndex = int(interTri[triCounter])  # Call the triangle that intersects
-                        # v1 = lc[triangles[triIndex,0]]        # Get its coordinates
-                        # v2 = lc[triangles[triIndex,1]]        # this is completely redundant
-                        # v3 = lc[triangles[triIndex,2]]
-                        # v1 = v1[2]
-                        # v2 = v2[2]
-                        # v3 = v3[2]
-                        if zVals[p] <= InterPointZ[triCounter]: # get the Z elevation of the intersection point and see 
-                            intersections += 1                  # wether is underneath the surface or not
+                        intersections = 0  
+                        for t in range(int(numberInter[i,j])):
+                            if Z[k] <= InterPointZ[int(triIdx)]: # get the Z elevation of the intersection point and see 
+                                intersections += 1
+                            triIdx += 1
+                        if intersections % 2 == 0: 
+                            Phase[i, j,k] = 0
                         else:
-                            continue
-                        # if interTRiangleFast(v1,v2,v3, zVals[p]) == True:
-                        #     intersections += 1
-                        # else:
-                        #     continue hier war btw der fehler weil hier kein counter lief
-                    if intersections % 2 == 0:                  # if even number of intersections point is above surface 
-                        Phase = np.append([0], Phase)
-                    else:
-                        Phase = np.append([1],Phase)            # else it is underneath
-            triCounter +=int(numberInter[s])                    # update indices
+                            Phase[i,j,k] = 1
                     
-
                     
+                    
+                        
+                           
+                        
+            
+    
     return Phase
+
+
 
 from stl import mesh
 
@@ -429,8 +347,7 @@ def gridWrap(surf, grid):
             cE +=4
     return Phase
 
-#Ph = gridWrap(tri,grid)
-#Ph = np.reshape(Ph,(16,16,16),order='C')
+
 
 
 from curve_interpolations import *
@@ -549,24 +466,8 @@ def OpenVolumeTest(inFile, nInter, nPrec, grid):
     
     triangles = np.concatenate((tri1,tri2))
 
-    #Phase = np.zeros((grid.size/3))
-
-    #redo in parallel
-    print(len(triangles))
-    
-            
-            
-        #first ind = first tri
-        # mesh1 = np.concatenate((mesh1, normals[p]))
-        # mesh1 = np.concatenate((mesh1, lc[triangles[p,0]]))
-        # mesh1 = np.concatenate((mesh1, lc[triangles[p,1]]))
-        # mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
-        
-    #mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
-    #np.save("surf",mesh1)
-    #Phase = mainTest(triangles, lc, grid)
-    #Phase = fastRay(triangles, lc, grid)
-    Phase = interpretRegularGrid(triangles,lc,grid)
+ 
+    Phase = rayTracingRectilinear(triangles,lc,grid)
     return Phase
 
     
