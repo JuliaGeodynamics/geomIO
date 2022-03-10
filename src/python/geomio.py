@@ -188,16 +188,18 @@ def sortLayers(inFile): # Obsolete
     return 
 
 from raytest import *
-def rayTracing(inFile: str, numInter: int, nPrec:int, grid):
+def rayTracing(inFile: str, grid:list, numInter: int = 2, nPrec:int = 2):
     
      
         
     if ".stl" in inFile:
-        sys.exit("stlParser not implemented")
+        Phase = fastRayFile(inFile, grid)
 
+    elif ".svg" in inFile:
+        Phase = OpenVolumeTest(inFile, numInter, nPrec, grid)
     
-    Phase = OpenVolumeTest(inFile, numInter, nPrec, grid)
-    
+    else:
+        sys.exit("Input must be provided as .svg or .stl file ")
     return Phase
 
 
