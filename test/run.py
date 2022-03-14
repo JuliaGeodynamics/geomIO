@@ -6,7 +6,7 @@ sys.path.append(geomIOpath)
 import geomio
 import numpy as np
 import time as t
-from stl import mesh
+from meshGen import *
 #name of the inputfile
 inFile = "input/dome.svg"
 
@@ -21,32 +21,29 @@ numInterLayers = 3
 
 #number of points that are computed per bezier segment
 nPrec = 4
+xBound =[0,250]
+yBound =[100,200]
+zBound =[-200,0]
+nx,ny,nz = 4,6,8
 
-# import pickle
-# os.chdir('/home/lucas/Desktop/pymarkers')
-# with open("grid.pk1", 'rb') as inp:
-#     grid = pickle.load(inp)
-# # x,y,z = grid[0], grid[1], grid[2]
-
-# os.chdir('/home/lucas/Desktop/geomIO/test')
-# Phase = geomio.rayTracing("output/dome.stl", grid)
-
-#mode bin or asc
-#calling the main function
-geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=False)
-# 
+x,y,z,X,Y,Z = testMesh(nx,ny,nz, xBound, yBound, zBound)
+grid = list((X,Y,Z))
 # t1 = t.time()
-# Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
-
+Phase = geomio.rayTracing("output/dome.stl", grid)
 # t2 = t.time()
 # print(t2-t1)
-#plot the pointcloud. requiers open3d
-# os.chdir('/home/lucas/Desktop/pymarkers')
-# with open('Phase.npy', 'wb') as f:
-#     np.save(f,Phase)
+writeVTK(x,y,z,Phase, "dome")
 
+
+#calling the main function
+#geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=False)
+# 
+
+# Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
+
+
+#plot the pointcloud. requiers open3d
 #geomio.plotCloud3D(inFile,numInterLayers,nPrec)
-#l,nl = geomio.getLayers(inFile)
 
 #get the boundaries of the mesh/volume
 #geomio.getBounds(inFile, numInterLayers, nPrec)
