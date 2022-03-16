@@ -235,6 +235,69 @@ def rayTracingRectilinear(triangles, lc, grid):
 
 from stl import mesh
 
+def multiLayerRay(inFile: list, grid):
+    
+    triangles = mesh.Mesh.from_file(inFile)
+    vertices = triangles.points
+    x,y,z = grid[0], grid[1], grid[2]
+    X,Y = x[:,:,0], y[:,:,0]
+    Z = z[0,0,:]
+    Phase = np.zeros_like(x) # Phase array(comes notflattend)
+
+    nx, ny, nz = Phase.shape[0],Phase.shape[1],Phase.shape[2]
+
+    numberInter = np.zeros_like(X)
+    #interTri = np.array([])
+    InterPointZ = np.array([])
+    
+    for j in range(ny):
+        for i in range(nx):
+            print("computing cell " + "x " + str(i) +", y " + str(j))
+            for p in range(len(vertices)):
+                             
+                
+                vertex = np.array([[vertices[p,0], vertices[p,1]],[vertices[p,3], vertices[p,4]],
+                                   [vertices[p,6], vertices[p,7]]]) # transforming the triangle vertices into 2D
+                if insideTriangle2D(np.array([X[i,j], Y[i,j]]), vertex):                         # Use barycentric weights to check intersection
+                    
+                    numberInter[i,j] +=1                      # count the triangles a point intersects
+                    #interTri = np.append([p], interTri)     # save the index to triangle that intersects
+                       # Save the Z coordinate of the intersection Point on the triangle
+                       #test 
+                    #SecPoint =upperTest(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))
+                    InterPointZ = np.append([upperTest(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))], InterPointZ)
+                    #print(SecPoint)
+                else:
+                    continue
+    InterPointZ = np.flip(InterPointZ)            
+    print("intersection 2D completed")
+     # used to count indeces for InterTri and InterPointZ
+     #test with more intersection(flip current file by 90°)
+    for k in range(nz):
+        triIdx = 0
+        for j in range(ny):
+            
+                for i in range(nx):
+                    #print("computing cell " + "x " + str(i) +", y " + str(j))
+                    #print(triIdx)
+                    
+                    
+                    if numberInter[i,j] == 0:
+                        Phase[i,j,k]= 0
+                    else:
+                        intersections = 0  
+                        for t in range(int(numberInter[i,j])):
+                            if Z[k] <= InterPointZ[int(triIdx)]: # get the Z elevation of the intersection point and see 
+                                intersections += 1
+                            triIdx += 1
+                        if intersections % 2 == 0: 
+                            Phase[i, j,k] = 0
+                        else:
+                            Phase[i,j,k] = 1
+    
+    
+    return Phase
+
 def fastRayFile(inFile:str, grid):
     
     

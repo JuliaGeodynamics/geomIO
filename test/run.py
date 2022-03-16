@@ -11,8 +11,8 @@ from meshGen import *
 inFile = "input/dome.svg"
 
 #name of the stl file which will be generated
-name = ["dome.stl"]#, "salt.stl"]
-
+#name = ["dome.stl"]#, "salt.stl"]
+name = ["dome1.stl", "dome2.stl", "dome3.stl"]
 #wether it is a closed volume or an open surface
 Volume = False
 
@@ -24,19 +24,18 @@ nPrec = 4
 xBound =[0,250]
 yBound =[100,200]
 zBound =[-200,0]
-nx,ny,nz = 4,6,8
+nx,ny,nz = 40,60,80
 
 x,y,z,X,Y,Z = testMesh(nx,ny,nz, xBound, yBound, zBound)
 grid = list((X,Y,Z))
 # t1 = t.time()
-Phase = geomio.rayTracing("output/dome.stl", grid)
+#Phase = geomio.rayTracing(name, grid)
 # t2 = t.time()
 # print(t2-t1)
-writeVTK(x,y,z,Phase, "dome")
-
+#writeVTK(x,y,z,Phase, "dome")
 
 #calling the main function
-#geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=False)
+#geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=True)
 # 
 
 # Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)
