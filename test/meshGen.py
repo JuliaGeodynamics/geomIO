@@ -9,7 +9,7 @@ import numpy as np
 
 import sys,os
 
-def testMesh(nx : int ,ny: int, nz: int, xBound:tuple, yBound:tuple, zBound:tuple):
+def createMesh(nx : int ,ny: int, nz: int, xBound:tuple, yBound:tuple, zBound:tuple):
     
     """
     function to generate a 3D meshgrid for testing the raytraycing
@@ -24,10 +24,10 @@ def testMesh(nx : int ,ny: int, nz: int, xBound:tuple, yBound:tuple, zBound:tupl
     y = np.linspace(yBound[0],yBound[1],ny)
     z = np.linspace(zBound[0],zBound[1],nz)
     
-    X,Y,Z = np.meshgrid(x,y,z)
-    X = np.transpose(X, (1,0,2)) 
-    Y = np.transpose(Y, (1,0,2))
-    Z = np.transpose(Z, (1,0,2))
+    X,Y,Z = np.meshgrid(x,y,z, indexing ='ij') #matrix indexing{ij} array[i,j]
+    # X = np.transpose(X, (1,0,2)) 
+    # Y = np.transpose(Y, (1,0,2))
+    # Z = np.transpose(Z, (1,0,2))
     
     return x,y,z, X,Y,Z
 

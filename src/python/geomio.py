@@ -188,12 +188,15 @@ def sortLayers(inFile): # Obsolete
     return 
 
 from raytest import *
+
+
+
 def rayTracing(inFile, grid:list, numInter: int = 2, nPrec:int = 2):
     
     if isinstance(inFile, list) :
         Phase = np.zeros_like(grid[0])
         for i in range(len(inFile)):
-            Ph = fastRayFile("output/"+ inFile[i] , grid)
+            Ph = fastRayFile(inFile[i] , grid)
             Phase = Phase +Ph
     else:
         if ".stl" in inFile:
@@ -201,6 +204,7 @@ def rayTracing(inFile, grid:list, numInter: int = 2, nPrec:int = 2):
     
         elif ".svg" in inFile:
             Phase = OpenVolumeTest(inFile, numInter, nPrec, grid)
+            #catch case multiple objects
         
         else:
             sys.exit("Input must be provided as .svg or .stl file ")
