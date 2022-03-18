@@ -104,7 +104,7 @@ def triSurfOpen(lc, numLayers, nInter, nPrec):
     """
     #Layers, numLayers = getLayers(inFile)
     
-    #lc = getCarthesian(inFile,nInter,nPrec) # get coordinates
+    #lc = getPointCoords(inFile,nInter,nPrec) # get coordinates
     
     m1, t = indexingOpen(numLayers, lc, nInter)
     
@@ -201,7 +201,7 @@ def triSurfClose(lc, numLayers, nInter, nPrec):
     surface triangulation for closed volumes
     """
     #Layers, numLayers = getLayers(inFile)
-    #lc = getCarthesian(inFile,nInter,nPrec)
+    #lc = getPointCoords(inFile,nInter,nPrec)
 
     nQuads = nInter+numLayers -1
     tri1 = np.array([])
@@ -311,7 +311,7 @@ def wSTL(data, path, numInter, nPrec,name, volume = False, mode = "ASCII"):
     import struct
     import stl
     from stl import mesh
-    lc = getCarthesian(data, path, numInter,nPrec)
+    lc = getPointCoords(data, path, numInter,nPrec)
 
     if volume:
         triangles, face = triSurfClose(lc,len(path), numInter,nPrec)
@@ -319,7 +319,7 @@ def wSTL(data, path, numInter, nPrec,name, volume = False, mode = "ASCII"):
             
         triangles, face = triSurfOpen(lc, len(path), numInter,nPrec)
     #nec for writing
-    os.chdir("output")
+    #os.chdir("output")
     cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
     for i, f in enumerate(face):
         for j in range(3):
@@ -335,7 +335,7 @@ def wSTL(data, path, numInter, nPrec,name, volume = False, mode = "ASCII"):
         cube.save(str(name),mode=stl.Mode.BINARY )
     #else:
     #    print("Please set writing mode to BIN or ASCII")
-    os.chdir("..")
+    #os.chdir("..")
     return
 
 

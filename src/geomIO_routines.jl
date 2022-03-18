@@ -95,7 +95,7 @@ function triSurfOpen(inFile::String, numInterLayers::Int64, nPrec::Int64)
     mesh, triangles = pygeomio.triSurfOpen(inFile,numInterLayers,nPrec)
     
     # reconstruct the normals to the triangles
-    lc          =   pygeomio.getCarthesian(inFile,numInterLayers,nPrec)
+    lc          =   pygeomio.getPointCoords(inFile,numInterLayers,nPrec)
     normals     =   pygeomio.triNormals(triangles, lc)
     
     # Load points & vertexes
@@ -124,7 +124,7 @@ function  triSurfClose(inFile::String, numInterLayers::Int64, nPrec::Int64)
     mesh, triangles = pygeomio.triSurfClose(inFile,numInterLayers,nPrec)
     
     # reconstruct the normals to the triangles
-    lc          = pygeomio.getCarthesian(inFile,numInterLayers,nPrec)
+    lc          = pygeomio.getPointCoords(inFile,numInterLayers,nPrec)
     normals     = pygeomio.triNormals(triangles, lc)
     
     # Load points & vertexes

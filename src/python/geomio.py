@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.path import Path as Pt
 import matplotlib.patches as patches
 import math
-import sys,os
+import sys,os,inspect
 
 import scipy as sc
 from scipy import interpolate
@@ -22,6 +22,53 @@ from pointcloud_delaunay import *
 from read_svg import *
 from curve_interpolations import *
 from create_STL_surface import *
+
+class context:
+
+    svg: svgFileData
+    volume = False
+    numInterLayers = 3
+    nPrec = 4
+    xBound =[0,250]
+    yBound =[100,200]
+    zBound =[-200,0]
+    nx,ny,nz = 30,40,80
+
+    def __init__(self):   
+        self.fpath = os.path.dirname(__file__)
+        self.svgInFile = ""
+        self.cwd = os.path.split(inspect.getframeinfo(sys._getframe(1)).filename)[0]
+        print('Current working directory: ', self.cwd)
+        self.outDir=os.path.join(self.cwd,'output')
+        if not os.path.isdir(self.outDir):
+            os.makedirs(self.outDir)
+            print(' -> No output directory. Create: ', self.outDir)
+        else:
+            print(' -> Existing ouput directory: ', self.outDir)
+
+
+
+    def add_svgInFile(self,fname):
+        self.svgInFile = os.path.join(self.cwd,fname)
+        print('Loading ... ', self.svgInFile)
+        self.svg = readSVG(self.svgInFile)
+
+    def export_svg2stl(self):
+        obj = list(set(self.svg.CurveNames))
+        for i in range(len(obj)):
+            path = splitPaths(self.svg, obj[i])
+            wSTL(self.svg, path,
+             self.numInterLayers, self.nPrec, self.outDir + '/' + obj[i] + '.stl',
+             self.volume, self.mode)
+            
+
+
+    #def add_stlOutFileName(self):
+
+
+    
+class opt_():
+    pass
 
 
 
@@ -36,7 +83,7 @@ def getPoints2D(inFile, nPrec, xml:bool = False):
         for i in range(len(labels)):
             name = str(labels[i])+ ".stl"
             path = splitPaths(data, labels[i])
-            lc = getCarthesian(data, path, numInter,nPrec)
+            lc = getPointCoords(data, path, numInter,nPrec)
             Coors.append(lc)
     
     
@@ -217,7 +264,7 @@ def getBounds(inFile, numInter, nPrec):
     printing the min and ma boundaries of the mesh/volume
     to adapt grid of thermomechanical coed(eg LaMEM)
     """
-    lc = getCarthesian(inFile, numInter,nPrec)
+    lc = getPointCoords(inFile, numInter,nPrec)
     xBound = np.array([np.amin(lc[:,0]),np.amax(lc[:,0])])
     yBound = np.array([np.amin(lc[:,1]),np.amax(lc[:,1])])
     zBound = np.array([np.amin(lc[:,2]),np.amax(lc[:,2])])
@@ -243,7 +290,7 @@ def plotCloud3D(inFile,nInterLayers, nPrec):
     """
     import open3d as o3d
     Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(inFile,nInterLayers,nPrec)
+    lc = getPointCoords(inFile,nInterLayers,nPrec)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
     #pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
@@ -303,22 +350,24 @@ def plotBezier(cPoints):
 
 import time
 
-def geomioFront(inFile:str, numInterLayers: int, nPrec: int, name:list, volume:bool = False, mode:str = "ASCII", xml: bool = False):
+def geomioFront(ctx:context, numInterLayers: int, nPrec: int, name:list, volume:bool = False, mode:str = "ASCII", xml: bool = False):
     
-    data = readSVG(inFile)
     if xml :
-        labels = list(set(data.CurveNames))
+        labels = list(set(ctx.svg.CurveNames))
         #name = list(labels)
         for i in range(len(labels)):
             #name = str(labels[i]) + ".stl"
-            path = splitPaths(data, labels[i])
-            wSTL(data, path, numInterLayers, nPrec, str(name[i]), volume, mode)
+            path = splitPaths(ctx.svg, labels[i])
+            wSTL(ctx.svg, path, numInterLayers, nPrec, ctx.outDir + '/' +  labels[i] + '.stl' , volume, mode)
             
     else:
-        path = data.Curves 
+
+        ## what is the purpose of this part? 
+
+        path = ctx.svg.Curves 
         name = name[0]
         #t1 = time.time()
-        wSTL(data, path, numInterLayers, nPrec, name, volume, mode)
+        wSTL(ctx.svg, path, numInterLayers, nPrec, name, volume, mode)
         #t2 = time.time()
         #print(t2-t1)
     return

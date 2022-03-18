@@ -1,14 +1,23 @@
 import sys, os
 
 fpath = os.path.dirname(__file__)
-geomIOpath = os.path.join(fpath, '../src/python')
-sys.path.append(geomIOpath)
+
 import geomio
 import numpy as np
 import time as t
 from meshGen import *
-#name of the inputfile
-inFile = "input/dome.svg"
+
+
+cwd = os.getcwd() 
+
+
+
+# Get geomIO context
+ctx = geomio.context()
+
+# Add svg to geomIO context
+ctx.add_svgInFile("input/dome.svg")
+
 
 #name of the stl file which will be generated
 #name = ["dome.stl"]#, "salt.stl"]
@@ -31,13 +40,13 @@ nx,ny,nz = 30,40,80
 x,y,z,X,Y,Z = createMesh(nx,ny,nz, xBound, yBound, zBound)
 grid = list((X,Y,Z))
 t1 = t.time()
-Phase = geomio.rayTracing(name, grid)
+#Phase = geomio.rayTracing(name, grid)
 t2 = t.time()
 print(t2-t1)
-writeVTK(x,y,z,Phase, "domeNeW")
+#writeVTK(x,y,z,Phase, "domeNeW")
 
 #calling the main function
-#geomio.geomioFront(inFile,numInterLayers, nPrec, name, Volume, xml=True)
+geomio.geomioFront(ctx,numInterLayers, nPrec, name, Volume, xml=True)
 # 
 
 # Phase = geomio.rayTracing(inFile, numInterLayers, nPrec, grid)

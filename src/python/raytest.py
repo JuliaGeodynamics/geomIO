@@ -278,7 +278,7 @@ def OpenVolumeTest(inFile, nInter, nPrec, grid):
     data = readSVG(inFile)
     path = data.Curves
     Layers, numLayers = getLayers(inFile)
-    lc = getCarthesian(data, path, nInter,nPrec)
+    lc = getPointCoords(data, path, nInter,nPrec)
 
     
     nQuads = nInter+numLayers -1

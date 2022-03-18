@@ -1,0 +1,23 @@
+{
+    // Verwendet IntelliSense zum Ermitteln möglicher Attribute.
+    // Zeigen Sie auf vorhandene Attribute, um die zugehörigen Beschreibungen anzuzeigen.
+    // Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Aktuelle Datei",
+            "type": "python",
+            "request": "launch",
+            //"env": {"PYTHONPATH": "${workspaceFolder}${pathSeparator}${env:PYTHONPATH}"},
+            //"cwd": "${command:extension.vscode-wsl-workspaceFolder}/test",
+            "cwd": "${workspaceFolder}/test",
+            //"cwd": "/home/tobi/01_software/geomIO_/test",
+            //"program": "/home/tobi/01_software/geomIO_/test/run.py",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            //"localRoot": "${workspaceFolder}",
+            //"remoteRoot": "${command:extension.vscode-wsl-workspaceFolder}"
+        }
+    ]
+}

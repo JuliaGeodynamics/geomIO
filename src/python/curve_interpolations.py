@@ -407,7 +407,7 @@ def deCastel(cPoints, t = 0.5):
 #numLayers is number of interpolation steps
 #bug with only 2 inter
 #
-def getCarthesian(data, path, numInterLayers, prec):
+def getPointCoords(data, path, numInterLayers, prec):
     """
     This function computes the coordinates for all
     the points in the pointcloud, prec being the number 
