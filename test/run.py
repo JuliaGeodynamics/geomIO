@@ -1,22 +1,18 @@
 import sys, os
-
-fpath = os.path.dirname(__file__)
-
 import geomio
 import numpy as np
 import time as t
 from meshGen import *
 
 
-cwd = os.getcwd() 
-
-
-
 # Get geomIO context
 ctx = geomio.context()
 
-# Add svg to geomIO context
+# Add SVG to geomIO context
 ctx.add_svgInFile("input/dome.svg")
+
+# Export STLs
+ctx.export_svg2stl()
 
 
 #name of the stl file which will be generated

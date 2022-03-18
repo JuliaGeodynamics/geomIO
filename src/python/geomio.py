@@ -46,8 +46,6 @@ class context:
         else:
             print(' -> Existing ouput directory: ', self.outDir)
 
-
-
     def add_svgInFile(self,fname):
         self.svgInFile = os.path.join(self.cwd,fname)
         print('Loading ... ', self.svgInFile)
@@ -59,7 +57,8 @@ class context:
             path = splitPaths(self.svg, obj[i])
             wSTL(self.svg, path,
              self.numInterLayers, self.nPrec, self.outDir + '/' + obj[i] + '.stl',
-             self.volume, self.mode)
+             self.volume, True)
+            print(' -> Export: ',  self.outDir + '/' + obj[i] + '.stl')
             
 
 
