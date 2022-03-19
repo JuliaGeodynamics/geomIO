@@ -5,8 +5,6 @@
 # svgpathtools, numpy, matplotlib, math, sys, os, scipy
 # numpy-stl
 
-from cmath import inf
-from distutils.log import error
 from svgpathtools import svg2paths, real, imag, Line, svg2paths2, Document
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,37 +23,9 @@ from read_svg import *
 from curve_interpolations import *
 from create_STL_surface import *
 
-class rectLinGrid:
-    xBnds       : tuple
-    yBnds       : tuple
-    zBnds       : tuple
-    nx          : int
-    ny          : int
-    nz          : int
-    X           : np.ndarray
-    Y           : np.ndarray
-    Z           : np.ndarray
-    PHS         : np.ndarray
-    grd         : list
-    
-    def __init__(self,nx : int ,ny: int, nz: int, xBnds:tuple, yBnds:tuple, zBnds:tuple):
-        self.nx              = nx
-        self.ny              = ny
-        self.nz              = nx
-        self.xBnds           = xBnds
-        self.xBnds           = yBnds
-        self.xBnds           = zBnds
-        self.x               = np.linspace(xBnds[0],xBnds[1],nx)
-        self.y               = np.linspace(yBnds[0],yBnds[1],ny)
-        self.z               = np.linspace(zBnds[0],zBnds[1],nz)
-        self.X,self.Y,self.Z = np.meshgrid(self.x,self.y,self.z, indexing ='ij') #matrix indexing{ij} array[i,j]
-        self.PHS             = np.zeros_like(self.X)
-        self.grd             = list((self.X,self.Y,self.Z))
+from rectLinGrid import *
 
-class stlMesh(NamedTuple):
-    nInterPaths: int 
-    nBezCtrlPts: int
-    isVol      : bool
+
 class context:
     svg:   svgFileData
     rlgrd: rectLinGrid
@@ -79,14 +49,15 @@ class context:
         self.svg = readSVG(self.svgInFile)
 
     def svg2stl(self,nInterPaths: int, nBezCtrlPts: int,isVol:bool):
-        self.stl = stlMesh(nInterPaths,nBezCtrlPts,isVol)
-        obj = list(set(self.svg.CurveNames))
-        for i in range(len(obj)):
-            path    = splitPaths(self.svg, obj[i])
-            fname   = self.outDir + '/' + obj[i] + '.stl'
+        objs = list(set(self.svg.CurveNames))
+        for i in range(len(objs)):
+            self.stl = stlMesh([],nInterPaths,nBezCtrlPts,isVol)
+            paths = splitPaths(self.svg, objs[i])
+            for j in range(len(paths)):
+                self.stl.paths.append(paths[j])
+            fname           = self.outDir + '/' + objs[i] + '.stl'
             print(' -> Export: ',  fname)
-            wSTL(self.svg, path,
-             self.numInterLayers, self.nPrec, fname,self.volume)
+            writeSTL(fname,self.svg, self.stl)
     
     def addgrd(self,nx : int ,ny: int, nz: int, xBnds:tuple, yBnds:tuple, zBnds:tuple):
         print('Create rectilinear grid: ', str(nx)+'x'+str(ny)+'x'+str(nz)+','+str(xBnds)+'x'+str(yBnds)+'x'+str(zBnds))
@@ -94,22 +65,22 @@ class context:
 
     def stl2grd(self,inFile:list):
         assert hasattr(self, 'rlgrd'), "Initialize grid for geomIO context with creategrd(...)"
-        assert hasattr(self, 'svg'),   "Load svg file into geomIO context with readsvg(...)"
-        
+                
         if inFile:
             # Only use specific STLs/SVG objects to set up the grid
             for i in range(len(inFile)):
                 fname          = self.outDir+'/'+inFile[i]+'.stl'
                 print(' -> Assign to grid: ',  fname)
-                phs            = fastRayFile(fname, self.rlgrd.grd)
+                phs            = rayTrc_rlgrd(fname, self.rlgrd)
                 self.rlgrd.PHS = self.rlgrd.PHS + phs
         else:
             # Use ALL svg objects to set up the grid
+            assert hasattr(self, 'svg'),   "Load svg file into geomIO context with readsvg(...)"
             svgobjs = np.unique(np.array(self.svg.CurveNames))
             for objName in np.nditer(svgobjs):
                 fname          = self.outDir+'/'+str(objName)+'.stl'
                 print(' -> Assign to grid: ',  fname)
-                phs            = fastRayFile(fname, self.rlgrd.grd)
+                phs            = rayTrc_rlgrd(fname, self.rlgrd)
                 self.rlgrd.PHS = self.rlgrd.PHS + phs
 
 

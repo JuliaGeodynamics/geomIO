@@ -8,12 +8,14 @@ Created on Fri Oct 15 17:03:02 2021
 from time import time
 import numpy as np
 import matplotlib.path as mpltPath
-
+from rectLinGrid import *
+import matplotlib.tri as mtri
 
 from numba import jit
+from numba.np.extensions import cross2d
 
-#@jit(nopython=True)
-def insideTriangle2D(point, vertices):
+@jit(nopython=True)
+def insideTriangle2D(point:np.array, vertices:np.array):
     """
     determine if point is inside 2D triangle using barycentric weights
     https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution    
@@ -29,18 +31,23 @@ def insideTriangle2D(point, vertices):
     Bool
 
     """
-    point = point.astype(float)
-    vertices = vertices.astype(float)
+    #point = point.astype(float)
+    #vertices = vertices.astype(float)
     a = vertices[0]
     b = vertices[1]
     c = vertices[2]
-    xd = np.cross(a,b) + np.cross(b,c) + np.cross(c,a)
+    
+    xd = cross2d(a,b) + cross2d(b,c) + cross2d(c,a)
+    #xd = np.cross(a,b) + np.cross(b,c) + np.cross(c,a)
     if xd ==0:
         xd+=0.00001
-    
-    xa = np.cross(b,c) + np.cross(point, b-c)
-    xb = np.cross(c,a) + np.cross(point, c-a)
-    xc = np.cross(a,b) + np.cross(point, a-b)
+
+    xa = cross2d(b,c) + cross2d(point, b-c)
+    xb = cross2d(c,a) + cross2d(point, c-a)
+    xc = cross2d(a,b) + cross2d(point, a-b)    
+    #xa = np.cross(b,c) + np.cross(point, b-c)
+    #xb = np.cross(c,a) + np.cross(point, c-a)
+    #xc = np.cross(a,b) + np.cross(point, a-b)
     
     wa = xa/xd
     wb = xb/xd
@@ -51,12 +58,10 @@ def insideTriangle2D(point, vertices):
         return True
     else:
         return False
-    
-    
 
 
-#@jit(nopython=True)    
-def createPlane(p,q,r):
+@jit(nopython=True)    
+def createPlane(p:np.array,q:np.array,r:np.array):
     """
     Creates a plane in Coordinate form
     ax + by +cz = d
@@ -65,16 +70,12 @@ def createPlane(p,q,r):
     PQ = q-p
     PR = r-p
     OP = p
-    a = np.array([PQ,PR,OP])
-    b = np.array([2,2,2])
     normal = np.cross(PQ,PR)
     d = np.dot(normal, OP)
-    
-    
-    
     return normal, d
-#@jit(nopython=True)
-def upperTest(v1,v2,v3, zVal):
+
+@jit(nopython=True)
+def upperTest(v1:np.array,v2:np.array,v3:np.array, zVal:np.array):
     """
     https://abiturma.de/mathe-lernen/geometrie/lagebeziehungen-und-schnitt/schnitt-gerade-ebene
     """
@@ -252,6 +253,89 @@ def fastRayFile(inFile:str, grid):
 
     
     return Phase
+
+
+
+
+@jit(nopython=True)
+def rayTrc_core(Phase,X,Y,Z,nx,ny,nz,nHit,zHit,vertices):
+
+    for j in range(ny):
+        for i in range(nx):
+            print("computing cell " + "x " + str(i) +", y " + str(j))
+            for p in range(len(vertices)):
+                             
+                
+                vertex = np.array([[vertices[p,0], vertices[p,1]],[vertices[p,3], vertices[p,4]],
+                                   [vertices[p,6], vertices[p,7]]]) # transforming the triangle vertices into 2D
+                if insideTriangle2D(np.array([X[i,j], Y[i,j]]), vertex):  # Use barycentric weights to check intersection
+                    
+                    nHit[i,j] +=1                      # count the triangles a point intersects
+                    #interTri = np.append([p], interTri)     # save the index to triangle that intersects
+                       # Save the Z coordinate of the intersection Point on the triangle
+                       #test 
+                    SecPoint = upperTest(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))
+                    zHit = np.append([SecPoint], zHit)
+
+                else:
+                    continue
+    
+    zHit = np.flip(zHit)            
+    print("intersection 2D completed")
+     # used to count indeces for InterTri and InterPointZ
+    for k in range(nz):
+        triIdx = 0
+        for j in range(ny):
+                for i in range(nx):
+                    #print("computing cell " + "x " + str(i) +", y " + str(j))
+                    #print(triIdx)
+                    
+                    
+                    if nHit[i,j] == 0:
+                        Phase[i,j,k]= 0
+                    else:
+                        intersections = 0  
+                        for t in range(int(nHit[i,j])):
+                            if Z[k] <= zHit[int(triIdx)]: # get the Z elevation of the intersection point and see 
+                                intersections += 1
+                            triIdx += 1
+                        if intersections % 2 == 0: 
+                            Phase[i, j,k] = 0
+                        else:
+                            Phase[i,j,k] = 1
+                            
+    return Phase
+
+
+def rayTrc_rlgrd(inFile:str, rlgrd:rectLinGrid):
+    
+    # STL *surface* mesh
+    triangles = mesh.Mesh.from_file(inFile)
+    vertices = triangles.points
+    
+    # 2D slices of rectilinear grid
+    X,Y,Z = rlgrd.X[:,:,0],rlgrd.Y[:,:,0],rlgrd.Z[0,0,:]
+    
+    #
+    Phase = rlgrd.PHS
+    nHit = np.zeros_like(X) # count the intersections on the x,y plane
+    zHit = np.array([]) # Z -  coordinate of intersectionpoints   
+    Phase = rayTrc_core(Phase,X,Y,Z,rlgrd.nx,rlgrd.ny,rlgrd.nz,nHit,zHit,vertices)
+    
+    return Phase
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
