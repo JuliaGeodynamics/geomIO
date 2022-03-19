@@ -90,8 +90,7 @@ class context:
     
     def addgrd(self,nx : int ,ny: int, nz: int, xBnds:tuple, yBnds:tuple, zBnds:tuple):
         print('Create rectilinear grid: ', str(nx)+'x'+str(ny)+'x'+str(nz)+','+str(xBnds)+'x'+str(yBnds)+'x'+str(zBnds))
-        self.rlgrd = rectLinGrid(nx,ny,nz,xBnds,yBnds,zBnds)
-        
+        self.rlgrd = rectLinGrid(nx,ny,nz,xBnds,yBnds,zBnds)  
 
     def stl2grd(self,inFile:list):
         assert hasattr(self, 'rlgrd'), "Initialize grid for geomIO context with creategrd(...)"
@@ -113,11 +112,6 @@ class context:
                 phs            = fastRayFile(fname, self.rlgrd.grd)
                 self.rlgrd.PHS = self.rlgrd.PHS + phs
 
-
-
-    
-class opt_():
-    pass
 
 
 
