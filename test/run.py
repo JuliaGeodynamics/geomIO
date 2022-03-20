@@ -1,8 +1,19 @@
+import sys,os
+
+
+fpath = os.path.dirname(__file__)
+geomIOpath = os.path.join(fpath, '../src/python')
+sys.path.append(geomIOpath)
+
+
+
 import geomio
 import numpy as np
 import time as t
 from meshGen import *
 
+import warnings
+warnings.filterwarnings('ignore')
 
 #### 1) Create geomIO context
 ctx = geomio.context()
@@ -19,22 +30,25 @@ ctx.svg2stl(nInterPaths,nBezCtrlPts,isVol)
 #### 4) Transfer STL layered structure to rectilinear grid
 #    4a) Add rectilinear grid to geomIO context
 xBnds    = [0,250]
-yBnds    = [100,200]
+yBnds    = [110,190]
 zBnds    = [-200,0]
-nx,ny,nz = 30,40,80
+nx,ny,nz = 120,40,220
 ctx.addgrd(nx,ny,nz,xBnds,yBnds,zBnds)
 
 #    4b) Use ALL STL structures to assign the structure to the rectilinear grid
-ctx.stl2grd([])
+#t1 = t.time()
+#ctx.stl2grd([])
+#t2 = t.time()
+#print(t2-t1)
 #    4b) [optional] Only use specific STL structures to assign the structure to the rectilinear grid
-ctx.stl2grd(["dome1", "dome2", "dome3"])
+t1 = t.time()
+ctx.stl2grd(["dome1","dome2","dome3"])
+t2 = t.time()
+print(t2-t1)
 
 
-
-
-
-
-
+#### 5) Export phase grid as vtr (VTK rectilinear grid)
+ctx.grd2vtr()
 
 
 

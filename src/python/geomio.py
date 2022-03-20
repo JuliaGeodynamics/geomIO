@@ -25,6 +25,7 @@ from create_STL_surface import *
 
 from rectLinGrid import *
 
+from pyevtk.hl import gridToVTK
 
 class context:
     svg:   svgFileData
@@ -71,7 +72,8 @@ class context:
             for i in range(len(inFile)):
                 fname          = self.outDir+'/'+inFile[i]+'.stl'
                 print(' -> Assign to grid: ',  fname)
-                phs            = rayTrc_rlgrd(fname, self.rlgrd)
+                #phs            = rayTrc_rlgrd(fname, self.rlgrd)
+                phs            = rayTrc_rlgrd(fname, self.rlgrd.grd)
                 self.rlgrd.PHS = self.rlgrd.PHS + phs
         else:
             # Use ALL svg objects to set up the grid
@@ -80,8 +82,17 @@ class context:
             for objName in np.nditer(svgobjs):
                 fname          = self.outDir+'/'+str(objName)+'.stl'
                 print(' -> Assign to grid: ',  fname)
-                phs            = rayTrc_rlgrd(fname, self.rlgrd)
+                #phs            = rayTrc_rlgrd(fname, self.rlgrd)
+                phs            = rayTrc_rlgrd(fname, self.rlgrd.grd)
+                #phs            = fastRayFile(fname, self.rlgrd.grd)
                 self.rlgrd.PHS = self.rlgrd.PHS + phs
+    
+    def grd2vtr(self,fname='phs'):
+        print(' -> Export: ',  self.outDir+'/'+fname+'.vtr')
+        gridToVTK(self.outDir+'/'+fname,
+         self.rlgrd.x, self.rlgrd.y, self.rlgrd.z, 
+         pointData = {"Phase" : self.rlgrd.PHS })
+
 
 
 

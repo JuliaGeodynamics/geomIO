@@ -14,7 +14,60 @@ import matplotlib.tri as mtri
 from numba import jit
 from numba.np.extensions import cross2d
 
-@jit(nopython=True)
+
+
+
+
+# A utility function to calculate area
+# of triangle formed by (x1, y1),
+# (x2, y2) and (x3, y3)
+@jit(nopython=True) 
+def area(x1, y1, x2, y2, x3, y3):
+    return abs((x1 * (y2 - y3) + x2 * (y3 - y1)
+                + x3 * (y1 - y2)) / 2.0)
+ 
+ 
+# A function to check whether point P(x, y)
+# lies inside the triangle formed by
+# A(x1, y1), B(x2, y2) and C(x3, y3)
+@jit(nopython=True) 
+def isInside(x1, y1, x2, y2, x3, y3, x, y):
+
+    if x1==x2 and x1==x3 and y1==y2 and y1==y3:
+        return False
+ 
+    # Calculate area of triangle ABC
+    A = area (x1, y1, x2, y2, x3, y3)
+    # Calculate area of triangle PBC
+    A1 = area (x, y, x2, y2, x3, y3)
+    # Calculate area of triangle PAC
+    A2 = area (x1, y1, x, y, x3, y3)
+    # Calculate area of triangle PAB
+    A3 = area (x1, y1, x2, y2, x, y)
+    # Check if sum of A1, A2 and A3
+    # is same as A
+    if(abs(A - (A1 + A2 + A3)) < 1e-4):
+        return True
+    else:
+        return False
+ 
+# Driver program to test above function
+# Let us check whether the point P(10, 15)
+# lies inside the triangle formed by
+# A(0, 0), B(20, 0) and C(10, 30)
+#if (isInside(0, 0, 20, 0, 10, 30, 10, 15)):
+#    print('Inside')
+#else:
+#    print('Not Inside')
+
+
+
+
+
+
+
+
+#@jit(nopython=True)
 def insideTriangle2D(point:np.array, vertices:np.array):
     """
     determine if point is inside 2D triangle using barycentric weights
@@ -60,22 +113,19 @@ def insideTriangle2D(point:np.array, vertices:np.array):
         return False
 
 
-@jit(nopython=True)    
+@jit(nopython=True)
 def createPlane(p:np.array,q:np.array,r:np.array):
     """
     Creates a plane in Coordinate form
     ax + by +cz = d
     where a,b,c are the components of the normal array and d is d
     """    
-    PQ = q-p
-    PR = r-p
-    OP = p
-    normal = np.cross(PQ,PR)
-    d = np.dot(normal, OP)
+    normal = np.cross(q-p,r-p)
+    d = np.vdot(normal, p) # This is still causes a NUMBA performance warning
     return normal, d
 
 @jit(nopython=True)
-def upperTest(v1:np.array,v2:np.array,v3:np.array, zVal:np.array):
+def rayXplane(v1:np.array,v2:np.array,v3:np.array, zVal:np.array):
     """
     https://abiturma.de/mathe-lernen/geometrie/lagebeziehungen-und-schnitt/schnitt-gerade-ebene
     """
@@ -119,8 +169,8 @@ def rayTracingRectilinear(triangles, lc, grid):
                     #interTri = np.append([p], interTri)     # save the index to triangle that intersects
                        # Save the Z coordinate of the intersection Point on the triangle
                        #test 
-                    SecPoint =upperTest(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))
-                    InterPointZ = np.append([upperTest(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))], InterPointZ)
+                    SecPoint =rayXplane(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))
+                    InterPointZ = np.append([rayXplane(v1,v2,v3,np.array([X[i,j], Y[i,j], Z[0]]))], InterPointZ)
                     #print(SecPoint)
                 else:
                     continue
@@ -163,6 +213,75 @@ def rayTracingRectilinear(triangles, lc, grid):
 from stl import mesh
 
 
+
+
+@jit(nopython=True)
+def rayTrc_core(x,y,z,vertices,zHit):
+    #x,y,z = grid[0], grid[1], grid[2]
+    X,Y = x[:,:,0], y[:,:,0]
+    Z = z[0,0,:]
+    Phase = np.zeros_like(x) # Phase array(comes notflattend)
+    nx, ny, nz = Phase.shape[0],Phase.shape[1],Phase.shape[2]
+    nHit = np.zeros_like(X) # count the intersections on the x,y plane
+    #zHit = np.array([]) # Z -  coordinate of intersectionpoints
+    
+    for j in range(ny):
+        for i in range(nx):
+            print("computing cell " + "x " + str(i) +", y " + str(j))
+            for p in range(len(vertices)):
+                
+                if isInside(vertices[p,0],vertices[p,1], vertices[p,3], vertices[p,4], vertices[p,6], vertices[p,7],  X[i,j], Y[i,j]):                    
+                    nHit[i,j] +=1                      # count the triangles a point intersects
+                    SecPoint = rayXplane(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))
+                    zHit = np.append([SecPoint], zHit)
+                else:
+                    continue
+    zHit = np.flip(zHit)            
+    print("intersection 2D completed")
+     # used to count indeces for InterTri and zHit
+    for k in range(nz):
+        triIdx = 0
+        for j in range(ny):
+            
+                for i in range(nx):
+                    #print("computing cell " + "x " + str(i) +", y " + str(j))
+
+                    if nHit[i,j] == 0:
+                        Phase[i,j,k]= 0
+                    else:
+                        intersections = 0  
+                        for t in range(int(nHit[i,j])):
+                            if Z[k] <= zHit[int(triIdx)]: # get the Z elevation of the intersection point and see 
+                                intersections += 1
+                            triIdx += 1
+                        if intersections % 2 == 0: 
+                            Phase[i, j,k] = 0
+                        else:
+                            Phase[i,j,k] = 1
+
+    return Phase
+
+
+
+def rayTrc_rlgrd(inFile:str, grid):
+       
+    triangles = mesh.Mesh.from_file(inFile)
+    vertices = triangles.points
+    x,y,z = grid[0], grid[1], grid[2]
+    # X,Y = x[:,:,0], y[:,:,0]
+    # Z = z[0,0,:]
+    # Phase = np.zeros_like(x) # Phase array(comes notflattend)
+    # nx, ny, nz = Phase.shape[0],Phase.shape[1],Phase.shape[2]
+    # nHit = np.zeros_like(X) # count the intersections on the x,y plane
+    zHit = np.array([]) # Z -  coordinate of intersectionpoints
+
+    Phase = rayTrc_core(x,y,z, vertices,zHit)    
+   
+    return Phase
+ 
+ 
+ 
+
 def fastRayFile(inFile:str, grid):
     
     
@@ -186,17 +305,17 @@ def fastRayFile(inFile:str, grid):
                              
                 
                 vertex = np.array([[vertices[p,0], vertices[p,1]],[vertices[p,3], vertices[p,4]],
-                                   [vertices[p,6], vertices[p,7]]]) # transforming the triangle vertices into 2D
-                if insideTriangle2D(np.array([X[i,j], Y[i,j]]), vertex):  # Use barycentric weights to check intersection
-                    
+                                   [vertices[p,6], vertices[p,7]]],dtype=np.float64) # transforming the triangle vertices into 2D
+                #if insideTriangle2D(np.array([X[i,j], Y[i,j]],dtype=np.float64), vertex):  # Use barycentric weights to check intersection
+                if isInside(vertices[p,0],vertices[p,1], vertices[p,3], vertices[p,4], vertices[p,6], vertices[p,7],  X[i,j], Y[i,j]):                    
                     numberInter[i,j] +=1                      # count the triangles a point intersects
                     #interTri = np.append([p], interTri)     # save the index to triangle that intersects
                        # Save the Z coordinate of the intersection Point on the triangle
                        #test 
-                    SecPoint = upperTest(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))
+                    SecPoint = rayXplane(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))
                     InterPointZ = np.append([SecPoint], InterPointZ)
-                    # InterPointZ = np.insert(InterPointZ, upperTest(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]])))
-                    #InterPointZ = np.append([upperTest(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))], InterPointZ)
+                    # InterPointZ = np.insert(InterPointZ, rayXplane(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]])))
+                    #InterPointZ = np.append([rayXplane(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))], InterPointZ)
                     #print(SecPoint)
                 else:
                     continue
@@ -256,77 +375,84 @@ def fastRayFile(inFile:str, grid):
 
 
 
-
-@jit(nopython=True)
-def rayTrc_core(Phase,X,Y,Z,nx,ny,nz,nHit,zHit,vertices):
-
-    for j in range(ny):
-        for i in range(nx):
-            print("computing cell " + "x " + str(i) +", y " + str(j))
-            for p in range(len(vertices)):
-                             
-                
-                vertex = np.array([[vertices[p,0], vertices[p,1]],[vertices[p,3], vertices[p,4]],
-                                   [vertices[p,6], vertices[p,7]]]) # transforming the triangle vertices into 2D
-                if insideTriangle2D(np.array([X[i,j], Y[i,j]]), vertex):  # Use barycentric weights to check intersection
-                    
-                    nHit[i,j] +=1                      # count the triangles a point intersects
-                    #interTri = np.append([p], interTri)     # save the index to triangle that intersects
-                       # Save the Z coordinate of the intersection Point on the triangle
-                       #test 
-                    SecPoint = upperTest(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))
-                    zHit = np.append([SecPoint], zHit)
-
-                else:
-                    continue
-    
-    zHit = np.flip(zHit)            
-    print("intersection 2D completed")
-     # used to count indeces for InterTri and InterPointZ
-    for k in range(nz):
-        triIdx = 0
-        for j in range(ny):
-                for i in range(nx):
-                    #print("computing cell " + "x " + str(i) +", y " + str(j))
-                    #print(triIdx)
-                    
-                    
-                    if nHit[i,j] == 0:
-                        Phase[i,j,k]= 0
-                    else:
-                        intersections = 0  
-                        for t in range(int(nHit[i,j])):
-                            if Z[k] <= zHit[int(triIdx)]: # get the Z elevation of the intersection point and see 
-                                intersections += 1
-                            triIdx += 1
-                        if intersections % 2 == 0: 
-                            Phase[i, j,k] = 0
-                        else:
-                            Phase[i,j,k] = 1
-                            
-    return Phase
-
-
-def rayTrc_rlgrd(inFile:str, rlgrd:rectLinGrid):
-    
-    # STL *surface* mesh
-    triangles = mesh.Mesh.from_file(inFile)
-    vertices = triangles.points
-    
-    # 2D slices of rectilinear grid
-    X,Y,Z = rlgrd.X[:,:,0],rlgrd.Y[:,:,0],rlgrd.Z[0,0,:]
-    
-    #
-    Phase = rlgrd.PHS
-    nHit = np.zeros_like(X) # count the intersections on the x,y plane
-    zHit = np.array([]) # Z -  coordinate of intersectionpoints   
-    Phase = rayTrc_core(Phase,X,Y,Z,rlgrd.nx,rlgrd.ny,rlgrd.nz,nHit,zHit,vertices)
-    
-    return Phase
-
-
-
-
+## OLD 
+##@jit(nopython=True)
+#def rayTrc_core(Phase,X,Y,Z,nx,ny,nz,vertices,verbose):
+#
+#    
+#    nHit = np.zeros_like(X) # count the intersections on the x,y plane
+#    zHit = np.array([])     # Z -  coordinate of intersectionpoints   
+#
+#    for j in range(ny):
+#        for i in range(nx):
+#            if verbose:
+#                print("computing cell " + "x " + str(i) +", y " + str(j))
+#            for p in range(len(vertices)):
+#                             
+#                
+#                vertex = np.array([[vertices[p,0], vertices[p,1]],[vertices[p,3], vertices[p,4]],
+#                                   [vertices[p,6], vertices[p,7]]],dtype=np.float64) # transforming the triangle vertices into 2D
+#
+#                #print('isinside: ',isInside(vertices[p,0],vertices[p,1], vertices[p,3], vertices[p,4], vertices[p,6], vertices[p,7],  X[i,j], Y[i,j]))
+#
+#                #if insideTriangle2D(np.array([X[i,j], Y[i,j]],dtype=np.float64), vertex):  # Use barycentric weights to check intersection
+#                if isInside(vertices[p,0],vertices[p,1], vertices[p,3], vertices[p,4], vertices[p,6], vertices[p,7],  X[i,j], Y[i,j]): 
+#                                    
+#                    nHit[i,j] +=1                      # count the triangles a point intersects
+#                    #interTri = np.append([p], interTri)     # save the index to triangle that intersects
+#                       # Save the Z coordinate of the intersection Point on the triangle
+#
+#                    SecPoint = rayXplane(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))
+#                    #SecPoint = rayXplane(v1,v2,v3,pquery)
+#                    #SecPoint = rayXplane(vertices[p,0:3],vertices[p,3:6],vertices[p,6:9],np.array([X[i,j], Y[i,j], Z[0]]))
+#                    #InterPointZ = np.append([SecPoint], InterPointZ)
+#                    zHit = np.append([SecPoint], zHit)
+#
+#                else:
+#                    continue
+#    
+#    zHit = np.flip(zHit)            
+#    print("intersection 2D completed")
+#     # used to count indices for InterTri and InterPointZ
+#    for k in range(nz):
+#        triIdx = 0
+#        for j in range(ny):
+#                for i in range(nx):
+#                    #print("computing cell " + "x " + str(i) +", y " + str(j))
+#                    #print(triIdx)
+#                    
+#                    
+#                    if nHit[i,j] == 0:
+#                        Phase[i,j,k]= 0
+#                    else:
+#                        intersections = 0  
+#                        for t in range(int(nHit[i,j])):
+#                            if Z[k] <= zHit[int(triIdx)]: # get the Z elevation of the intersection point and see 
+#                                intersections += 1
+#                            triIdx += 1
+#                        if intersections % 2 == 0: 
+#                            Phase[i, j,k] = 0
+#                        else:
+#                            Phase[i,j,k] = 1
+#                            
+#    return Phase
+#
+#
+#def rayTrc_rlgrd(inFile:str, rlgrd:rectLinGrid):
+#    
+#    # STL *surface* mesh
+#    triangles = mesh.Mesh.from_file(inFile)
+#    vertices = triangles.points
+#    
+#    # 2D slices of rectilinear grid
+#    X,Y,Z = rlgrd.X[:,:,0],rlgrd.Y[:,:,0],rlgrd.Z[0,0,:]
+#    
+#    # grid with assigned phases
+#    #phase = rlgrd.PHS
+#    phase = np.zeros_like(rlgrd.X)
+#    phase = rayTrc_core(phase,X,Y,Z,rlgrd.nx,rlgrd.ny,rlgrd.nz,vertices,False)
+#    
+#    return phase
 
 
 
