@@ -5,6 +5,95 @@ Created on Thu Aug 19 16:55:51 2021
 
 @author: lucas
 """
+# archive
+def rayTracing(inFile, grid:list, numInter: int = 2, nPrec:int = 2):
+    
+    if isinstance(inFile, list) :
+        Phase = np.zeros_like(grid[0])
+        for i in range(len(inFile)):
+            Ph = fastRayFile(inFile[i] , grid)
+            Phase = Phase +Ph
+    else:
+        if ".stl" in inFile:
+            Phase = fastRayFile(inFile, grid)
+    
+        elif ".svg" in inFile:
+            Phase = OpenVolumeTest(inFile, numInter, nPrec, grid)
+            #catch case multiple objects
+        
+        else:
+            sys.exit("Input must be provided as .svg or .stl file ")
+    return Phase
+
+
+#-> archive
+#@jit(nopython = True)
+def insideTriangle2D(point:np.array, vertices:np.array):
+    """
+    determine if point is inside 2D triangle using barycentric weights
+    https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution    
+    https://math.stackexchange.com/questions/51326/determining-if-an-arbitrary-point-lies-inside-a-triangle-defined-by-three-points
+    Parameters
+    ----------
+    point : Point to test for
+    vertices : vertices of 2D triangle
+        
+
+    Returns
+    -------
+    Bool
+
+    """
+    #point = point.astype(float)
+    #vertices = vertices.astype(float)
+    a = vertices[0]
+    b = vertices[1]
+    c = vertices[2]
+    
+    xd = cross2d(a,b) + cross2d(b,c) + cross2d(c,a)
+    #xd = np.cross(a,b) + np.cross(b,c) + np.cross(c,a)
+    if xd ==0:
+        xd+=0.00001
+
+    xa = cross2d(b,c) + cross2d(point, b-c)
+    xb = cross2d(c,a) + cross2d(point, c-a)
+    xc = cross2d(a,b) + cross2d(point, a-b)    
+    #xa = np.cross(b,c) + np.cross(point, b-c)
+    #xb = np.cross(c,a) + np.cross(point, c-a)
+    #xc = np.cross(a,b) + np.cross(point, a-b)
+    
+    wa = xa/xd
+    wb = xb/xd
+    wc = xc/xd
+    
+    
+    if 0<wa<1 and 0<wb<1 and 0<wc<1:
+        return True
+    else:
+        return False
+ #-> archive
+def geomioFront(ctx:context, numInterLayers: int, nPrec: int, name:list, volume:bool = False, mode:str = "ASCII", xml: bool = False):
+    
+    if xml :
+        labels = list(set(ctx.svg.CurveNames))
+        #name = list(labels)
+        for i in range(len(labels)):
+            #name = str(labels[i]) + ".stl"
+            path = splitPaths(ctx.svg, labels[i])
+            wSTL(ctx.svg, path, numInterLayers, nPrec, ctx.outDir + '/' +  labels[i] + '.stl' , volume, mode)
+            
+    else:
+
+        ## what is the purpose of this part? 
+
+        path = ctx.svg.Curves 
+        name = name[0]
+        #t1 = time.time()
+        wSTL(ctx.svg, path, numInterLayers, nPrec, name, volume, mode)
+        #t2 = time.time()
+        #print(t2-t1)
+    return
+    
 
 def interTRiangleFast(v1,v2,v3, zVal):
     

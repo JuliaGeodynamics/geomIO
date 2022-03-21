@@ -8,6 +8,7 @@ Created on Mon Mar 14 16:11:52 2022
 import numpy as np
 
 import sys,os
+#archive
 
 def createMesh(nx : int ,ny: int, nz: int, xBound:tuple, yBound:tuple, zBound:tuple):
     

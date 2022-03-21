@@ -203,6 +203,7 @@ def interZlayers(zCoor,numLayers):
     Inter = zCoor[-1]- zCoor[0]
     #print(Inter)
     Inter = Inter/numLayers
+    #replace with interp1D
     zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numLayers, False)
     #print(zValues)
     return zValues

@@ -9,6 +9,9 @@ import math
 import sys,os
 import scipy as sc
 from scipy import interpolate
+import struct
+import stl
+from stl import mesh
 #from numba import jit
 
 class stlMesh(NamedTuple):
@@ -16,7 +19,12 @@ class stlMesh(NamedTuple):
     nInterPaths: int 
     nBezCtrlPts: int
     isVol      : bool
+    mode       : str
 
+#
+#triangles = mesh.Mesh.from_file("output/dome1.stl")
+#vertices = triangles.points
+# for debugging
 #@jit(nopython=True) 
 def indexingOpen(numLayers, lc, nInter):
     nQuads = nInter+numLayers -1 # number of quads to be split in two triangles
@@ -309,11 +317,6 @@ def writeSTL(fname, svg:svgFileData,stlctx:stlMesh, mode = "ASCII"):
     placeholder function for writing stl files
     uses the lib np stl
     """
-    
-    import struct
-    import stl
-    from stl import mesh
-
     lc = getPointCoords(svg, stlctx.paths, stlctx.nInterPaths,stlctx.nBezCtrlPts)
 
     if stlctx.isVol:
@@ -333,41 +336,6 @@ def writeSTL(fname, svg:svgFileData,stlctx:stlMesh, mode = "ASCII"):
     return
 
 
-def wSTL(data, path, numInter, nPrec,name, volume = False, mode = "ASCII"):
-    """
-    placeholder function for writing stl files
-    uses the lib np stl
-    """
-    
-    import struct
-    import stl
-    from stl import mesh
-    lc = getPointCoords(data, path, numInter,nPrec)
-
-    if volume:
-        triangles, face = triSurfClose(lc,len(path), numInter,nPrec)
-    else:
-            
-        triangles, face = triSurfOpen(lc, len(path), numInter,nPrec)
-    #nec for writing
-    #os.chdir("output")
-    cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
-    for i, f in enumerate(face):
-        for j in range(3):
-            cube.vectors[i][j] = lc[f[j],:]
-    
-    #print("Saved file " + str(name) + " to directory:")
-    #print(os.getcwd())
-    #Write the mesh to file "cube.stl"
-    if mode == "ASCII":
-        
-        cube.save(str(name),mode=stl.Mode.ASCII )
-    elif mode == "BIN":
-        cube.save(str(name),mode=stl.Mode.BINARY )
-    #else:
-    #    print("Please set writing mode to BIN or ASCII")
-    #os.chdir("..")
-    return
 
 
 def wMulti(inFile, numInter, nPrec, names, volume):

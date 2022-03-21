@@ -10,7 +10,8 @@ sys.path.append(geomIOpath)
 import geomio
 import numpy as np
 import time as t
-from meshGen import *
+
+
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -25,7 +26,7 @@ ctx.addsvg("input/dome.svg")
 nInterPaths = 8     # Refine the grid in normal direction by adding N interpolated path instances
 nBezCtrlPts = 5     # Refine the grid along the Bezier paths by adding additional control points
 isVol       = False # Closed (volume) or or open STL mesh, i.e., do we have closed or open Bezier path instances
-ctx.svg2stl(nInterPaths,nBezCtrlPts,isVol)
+ctx.svg2stl(nInterPaths,nBezCtrlPts,isVol, "BIN")
 
 #### 4) Transfer STL layered structure to rectilinear grid
 #    4a) Add rectilinear grid to geomIO context

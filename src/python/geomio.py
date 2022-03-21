@@ -49,10 +49,10 @@ class context:
         print('Loading ... ', self.svgInFile)
         self.svg = readSVG(self.svgInFile)
 
-    def svg2stl(self,nInterPaths: int, nBezCtrlPts: int,isVol:bool):
+    def svg2stl(self,nInterPaths: int, nBezCtrlPts: int,isVol:bool, mode = "ASCII"):
         objs = list(set(self.svg.CurveNames))
         for i in range(len(objs)):
-            self.stl = stlMesh([],nInterPaths,nBezCtrlPts,isVol)
+            self.stl = stlMesh([],nInterPaths,nBezCtrlPts,isVol, mode)
             paths = splitPaths(self.svg, objs[i])
             for j in range(len(paths)):
                 self.stl.paths.append(paths[j])
@@ -111,44 +111,14 @@ def getPoints2D(inFile, nPrec, xml:bool = False):
             lc = getPointCoords(data, path, numInter,nPrec)
             Coors.append(lc)
     
-    
 
-
-    
-    # x = data.Curves
-    # cPoints = list()
-    # for i in range(len(x)):
-    #     if data.Commented[i]:
-    #         continue
-    #     else:
-            
-    #         line = x[i]  
-    #         points = controlPoints(line)
-    #         cPoints.append(points)
-    # t = np.linspace(0,1, nPrec)
-    # Coordinates = np.array([])
-
-    # for r in range(len(cPoints)):
-    #     for p in range(len(cPoints[r])):
-    #         seg = cPoints[r][p]
-    #         for s in range(nPrec):
-    #             B = deCastel(seg,t[s])
-                
-                 
-                
-    #             Coordinates = np.append([B],Coordinates)
-
-        
-    
-    # newshape = int(len(Coordinates)/2)
-    # Coordinates = np.reshape(Coordinates,(newshape,2))
     return Coors, labels
 
 
 def scaling():
     
     """
-    tbi
+    tba
     """
     return
     
@@ -263,25 +233,6 @@ from raytest import *
 
 
 
-def rayTracing(inFile, grid:list, numInter: int = 2, nPrec:int = 2):
-    
-    if isinstance(inFile, list) :
-        Phase = np.zeros_like(grid[0])
-        for i in range(len(inFile)):
-            Ph = fastRayFile(inFile[i] , grid)
-            Phase = Phase +Ph
-    else:
-        if ".stl" in inFile:
-            Phase = fastRayFile(inFile, grid)
-    
-        elif ".svg" in inFile:
-            Phase = OpenVolumeTest(inFile, numInter, nPrec, grid)
-            #catch case multiple objects
-        
-        else:
-            sys.exit("Input must be provided as .svg or .stl file ")
-    return Phase
-
 
 
 def getBounds(inFile, numInter, nPrec):
@@ -375,34 +326,8 @@ def plotBezier(cPoints):
 
 import time
 
-def geomioFront(ctx:context, numInterLayers: int, nPrec: int, name:list, volume:bool = False, mode:str = "ASCII", xml: bool = False):
-    
-    if xml :
-        labels = list(set(ctx.svg.CurveNames))
-        #name = list(labels)
-        for i in range(len(labels)):
-            #name = str(labels[i]) + ".stl"
-            path = splitPaths(ctx.svg, labels[i])
-            wSTL(ctx.svg, path, numInterLayers, nPrec, ctx.outDir + '/' +  labels[i] + '.stl' , volume, mode)
-            
-    else:
 
-        ## what is the purpose of this part? 
 
-        path = ctx.svg.Curves 
-        name = name[0]
-        #t1 = time.time()
-        wSTL(ctx.svg, path, numInterLayers, nPrec, name, volume, mode)
-        #t2 = time.time()
-        #print(t2-t1)
-    return
-    
-
-def geomioMulitLayer(inFile, numInterLayers, nPrec, name, volume = False, mode = "ASCII"):
-    
-    
-    
-    return
 
 
 
