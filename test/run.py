@@ -24,7 +24,7 @@ ctx.addsvg("input/dome.svg")
 
 #### 3) Export STLs
 nInterPaths = 8     # Refine the grid in normal direction by adding N interpolated path instances
-nBezCtrlPts = 5     # Refine the grid along the Bezier paths by adding additional control points
+nBezCtrlPts = 3     # Refine the grid along the Bezier paths by adding additional control points
 isVol       = False # Closed (volume) or or open STL mesh, i.e., do we have closed or open Bezier path instances
 ctx.svg2stl(nInterPaths,nBezCtrlPts,isVol, "BIN")
 
@@ -43,14 +43,14 @@ ctx.addgrd(nx,ny,nz,xBnds,yBnds,zBnds)
 #print(t2-t1)
 #    4b) [optional] Only use specific STL structures to assign the structure to the rectilinear grid
 t1 = t.time()
-#ctx.stl2grd(["dome1","dome2","dome3"])
-ctx.stl2grd(["dome1","dome3"])
+ctx.stl2grd(["dome1","dome2","dome3"])
+#ctx.stl2grd(["dome1","dome3"])
 t2 = t.time()
 print(t2-t1)
 
 
 #### 5) Export phase grid as vtr (VTK rectilinear grid)
-ctx.grd2vtr()
+#ctx.grd2vtr()
 
 
 

@@ -204,7 +204,12 @@ def interZlayers(zCoor,numLayers):
     #print(Inter)
     Inter = Inter/numLayers
     #replace with interp1D
-    zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numLayers, False)
+    x = zCoor.copy()
+    y = np.arange(0, len(zCoor))
+    f = interpolate.interp1d(y,x)
+    ynew = np.linspace(0.1,y[-1], numLayers, endpoint= False)
+    #zValues = np.linspace(zCoor[0] +Inter, zCoor[-1]- Inter, numLayers, False)
+    zValues = f(ynew)
     #print(zValues)
     return zValues
 
