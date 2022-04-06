@@ -6,6 +6,36 @@ Created on Thu Aug 19 16:55:51 2021
 @author: lucas
 """
 # archive
+
+    
+
+class Stl(object):
+    dtype = np.dtype([
+        ('normals', np.float32, (3, )),
+        ('v0', np.float32, (3, )),
+        ('v1', np.float32, (3, )),
+        ('v2', np.float32, (3, )),
+        ('attr', 'u2', (1, )),
+    ])
+
+    def __init__(self, header, data):
+        self.header = header
+        self.data = data
+
+    @classmethod
+    def from_file(cls, filename, mode='rb'):
+        with open(filename, mode) as fh:
+            header = fh.read(80)
+            size, = struct.unpack('@i', fh.read(4))
+            data = np.fromfile(fh, dtype=cls.dtype, count=size)
+            return Stl(header, data)
+
+    def to_file(self, filename, mode='wb'):
+        with open(filename, mode) as fh:
+            fh.write(self.header)
+            fh.write(struct.pack('@i', self.data.size))
+            self.data.tofile(fh)
+    
 def rayTracing(inFile, grid:list, numInter: int = 2, nPrec:int = 2):
     
     if isinstance(inFile, list) :

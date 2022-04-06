@@ -21,54 +21,51 @@ class stlMesh(NamedTuple):
     isVol      : bool
     mode       : str
 
-#
-#triangles = mesh.Mesh.from_file("output/dome1.stl")
-#vertices = triangles.points
-# for debugging
+
 #@jit(nopython=True) 
 def indexingOpen(numLayers, lc, nInter):
     nQuads = nInter+numLayers -1 # number of quads to be split in two triangles
-    tri1 = np.array([])#first set of quadhalfs
-    tri2 = np.array([])#second set of quadhalfs
+    tri1 = np.array([])#first set of triangles
+    tri2 = np.array([])#second set of second set of triangles
     for p in range(nQuads):
-        numP = int(len(lc)/(nQuads+1))#number of ???
-        nodeIdx = numP *p
-        shape = (int(numP*2)-2,3)
-        shapeS = (numP,3)
-        ind = np.zeros(shapeS, dtype = int)
-        ind2 = np.zeros(shapeS,dtype=int)
-        arrshift = numP-1
-        counter = 0
+        numP = int(len(lc)/(nQuads+1))#number of points per layer
+        nodeIdx = numP *p #index reffering to current layer
+        #shape = (int(numP*2)-2,3) # shape of index array for triangles of current layer + next
+        shapeS = (numP-1,3)# shape of indexing array of triangles 
+        ind = np.zeros(shapeS, dtype = int)#indices to first ste of triangles
+        ind2 = np.zeros(shapeS,dtype=int)# indices to second set of triangles
+        #arrshift = numP-1
+        #counter = 0 # number of triangles
         if p == 0:
             for i in range(numP-1):
                 if i == 0:
                     continue
-                ind[i,0] = i
-                ind[i,1] = i+1
-                ind[i,2] = numP+i
+                ind[i-1,0] = i
+                ind[i-1,1] = i+1
+                ind[i-1,2] = numP+i
                 
-                ind2[i,0] = numP +i
-                ind2[i,1] = numP + i+1
-                ind2[i,2] = i+1
-                counter +=1
-            tri1 = ind
-            tri2 = ind2
+                ind2[i-1,0] = numP +i
+                ind2[i-1,1] = numP + i+1
+                ind2[i-1,2] = i+1
+          #      counter +=1
+            tri1 = ind[0:-1,:]
+            tri2 = ind2[0:-1,:]
         else:
     
             for i in range(numP-1):
                 if i == 0:
                     continue
-                ind[i,0] = nodeIdx + i
-                ind[i,1] = nodeIdx + i+1
-                ind[i,2] = nodeIdx + arrshift+i
+                ind[i-1,0] = nodeIdx + i
+                ind[i-1,1] = nodeIdx + i+1
+                ind[i-1,2] = nodeIdx + numP+i
                 
-                ind2[i,0] = nodeIdx + arrshift +i
-                ind2[i,1] = nodeIdx + arrshift + i+1
-                ind2[i,2] = nodeIdx+ i+1
-                counter +=1
+                ind2[i-1,0] = nodeIdx + numP +i
+                ind2[i-1,1] = nodeIdx + numP + i+1
+                ind2[i-1,2] = nodeIdx+ i+1
+           #     counter +=1
                 
-            tri2 = np.concatenate((ind2, tri2))    
-            tri1 = np.concatenate((ind, tri1))
+            tri2 = np.concatenate((ind2[0:-1,:], tri2))    
+            tri1 = np.concatenate((ind[0:-1,:], tri1))
     
     triangles = np.concatenate((tri1,tri2))
     normals = triNormals(triangles, lc)
@@ -86,11 +83,6 @@ def indexingOpen(numLayers, lc, nInter):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
-    # CoorR = np.zeros_like(mesh1)
-    # CoorR[0,:] = LayerCoors[1,:]
-    # CoorR[1,:] = LayerCoors[2,:]
-    # CoorR[2,:] = LayerCoors[0,:]
-    
     
     return mesh1, triangles
 
@@ -244,48 +236,48 @@ def triSurfClose(lc, numLayers, nInter, nPrec):
     cover = np.concatenate((cCF,cCL))
     #index of the triangles in lc
     covTri = np.concatenate((cTF,cTL))
-
-    
-
-    #=======section for inside: working    
-
+    nQuads = nInter+numLayers -1 # number of quads to be split in two triangles
+    tri1 = np.array([])#first set of triangles
+    tri2 = np.array([])#second set of second set of triangles
     for p in range(nQuads):
-
-        nodeIdx = numP *p
-        shape = (int(numP*2)-2,3)
-        shapeS = (numP,3)
-        ind = np.zeros(shapeS, dtype = int)
-        ind2 = np.zeros(shapeS,dtype=int)
-        arrshift = numP-1
-        counter = 0
+        numP = int(len(lc)/(nQuads+1))#number of points per layer
+        nodeIdx = numP *p #index reffering to current layer
+        #shape = (int(numP*2)-2,3) # shape of index array for triangles of current layer + next
+        shapeS = (numP-1,3)# shape of indexing array of triangles 
+        ind = np.zeros(shapeS, dtype = int)#indices to first ste of triangles
+        ind2 = np.zeros(shapeS,dtype=int)# indices to second set of triangles
+        #arrshift = numP-1
+        #counter = 0 # number of triangles
         if p == 0:
-            for i in range(numP):
-
-                ind[i,0] = i
-                ind[i,1] = i+1
-                ind[i,2] = numP+i
+            for i in range(numP-1):
+                if i == 0:
+                    continue
+                ind[i-1,0] = i
+                ind[i-1,1] = i+1
+                ind[i-1,2] = numP+i
                 
-                ind2[i,0] = numP +i
-                ind2[i,1] = numP + i+1
-                ind2[i,2] = i+1
-                counter +=1
-            tri1 = ind
-            tri2 = ind2
+                ind2[i-1,0] = numP +i
+                ind2[i-1,1] = numP + i+1
+                ind2[i-1,2] = i+1
+          #      counter +=1
+            tri1 = ind[0:-1,:]
+            tri2 = ind2[0:-1,:]
         else:
     
-            for i in range(numP):
-
-                ind[i,0] = nodeIdx + i
-                ind[i,1] = nodeIdx + i+1
-                ind[i,2] = nodeIdx + arrshift+i
+            for i in range(numP-1):
+                if i == 0:
+                    continue
+                ind[i-1,0] = nodeIdx + i
+                ind[i-1,1] = nodeIdx + i+1
+                ind[i-1,2] = nodeIdx + numP+i
                 
-                ind2[i,0] = nodeIdx + arrshift +i
-                ind2[i,1] = nodeIdx + arrshift + i+1
-                ind2[i,2] = nodeIdx+ i+1
-                counter +=1
+                ind2[i-1,0] = nodeIdx + numP +i
+                ind2[i-1,1] = nodeIdx + numP + i+1
+                ind2[i-1,2] = nodeIdx+ i+1
+           #     counter +=1
                 
-            tri2 = np.concatenate((ind2, tri2))    
-            tri1 = np.concatenate((ind, tri1))
+            tri2 = np.concatenate((ind2[0:-1,:], tri2))    
+            tri1 = np.concatenate((ind[0:-1,:], tri1))
     
     triangles = np.concatenate((tri1,tri2))
     normals = triNormals(triangles, lc)
@@ -301,9 +293,12 @@ def triSurfClose(lc, numLayers, nInter, nPrec):
         mesh1 = np.concatenate((mesh1, lc[triangles[p,0]]))
         mesh1 = np.concatenate((mesh1, lc[triangles[p,1]]))
         mesh1 = np.concatenate((mesh1, lc[triangles[p,2]]))
-        #vertex = Tri(lc[triangles[p,0]],lc[triangles[p,1]],lc[triangles[p,1]])
         
     mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
+    # CoorR = np.zeros_like(mesh1)
+
+   
+    #mesh1 = np.reshape(mesh1,(len(triangles)*4,3))
     mesh1 = np.concatenate((mesh1,cover))
     triangles = np.concatenate((triangles,covTri))
 
@@ -335,109 +330,3 @@ def writeSTL(fname, svg:svgFileData,stlctx:stlMesh, mode = "ASCII"):
         cube.save(str(fname),mode=stl.Mode.BINARY )
     return
 
-
-
-
-def wMulti(inFile, numInter, nPrec, names, volume):
-    import struct
-    import stl
-    from stl import mesh
-    
-
-class Stl(object):
-    dtype = np.dtype([
-        ('normals', np.float32, (3, )),
-        ('v0', np.float32, (3, )),
-        ('v1', np.float32, (3, )),
-        ('v2', np.float32, (3, )),
-        ('attr', 'u2', (1, )),
-    ])
-
-    def __init__(self, header, data):
-        self.header = header
-        self.data = data
-
-    @classmethod
-    def from_file(cls, filename, mode='rb'):
-        with open(filename, mode) as fh:
-            header = fh.read(80)
-            size, = struct.unpack('@i', fh.read(4))
-            data = np.fromfile(fh, dtype=cls.dtype, count=size)
-            return Stl(header, data)
-
-    def to_file(self, filename, mode='wb'):
-        with open(filename, mode) as fh:
-            fh.write(self.header)
-            fh.write(struct.pack('@i', self.data.size))
-            self.data.tofile(fh)
-
-# head = "head"
-# head = bytes(head, 'utf-8')
-# file = Stl(head,mesh)
-# file.to_file('mesh.stl')
-
-    
-def write(ver):
-    header = 0
-    with open("slab.stl", mode="wb")as fh:
-#        writer = wr.Binary_STL_Writer(fh)
- #       writer.add_faces(ver)
-  #      writer.close()
-         fh.write(header)
-         fh.write(struct.pack)
-  
-    return
-# sim = dlnSC.simplices
-# vertex = dlnSC.vertices
-# #vertex = lc[ind]
-# from stl import mesh
-# volume = mesh.Mesh(np.zeros(sim.shape[0], dtype=mesh.Mesh.dtype))
-# for i, f in enumerate(sim):
-#     for j in range(3):
-#         volume.vectors[i][j] = vertex[f[j],:]
-# volume.save('slab3.stl')
-
-# dln = delny3D(lc)
-
-# head = "head"
-# head = bytes(head, 'utf-8')
-# file = Stl(head,dlnSC.points)
-# file.to_file('rick.stl')
-
-# test = Stl.from_file('rick.stl')
-# from vtk.util.np_support import vtk_to_np
-# np_coordinates = vtk_to_np(dln)
-
-# reader = vtk.vtkXMLUnstructuredGridReader()
-# reader.SetFileName( "slabvtk.vtu" )
-# reader.Update()
-
-
-# Point_cordinates = reader.GetOutput().GetPoints().GetData()
-
-# #write(vertex)
-#     #file = stlWrite(dln.vertices)
-# # fig = plt.figure()
-# # ax = plt.axes(projection='3d')
-# # ax.scatter3D(lc[:,0], lc[:,1], lc[:,2])
-# # plt.show()
-
-# # #dln.write()
-# writer = vtk.vtkXMLUnstructuredGridWriter()
-# #writer.SetFileType("stl")
-# writer.SetFileName('slabvtk.vtu')
-# writer.SetInputData(dln)
-# writer.Write()
-
-#pcd = o3d.geometry.PointCloud()
-#pcd.points = o3d.utility.Vector3dVector(lc[:,:3])
-#pcd.colors = o3d.utility.Vector3dVector(lc[:,3:6]/255)
-#pcd.normals = o3d.utility.Vector3dVector(lc[:,6:9])
-#o3d.visualization.draw_geometries([pcd])
-#hull = pcd.compute_convex_hull()
-#----------pivoting method
-# distances = pcd.compute_nearest_neighbor_distance()
-# avg_dist = np.mean(distances)
-# radius = 3 * avg_dist
-
-# #bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd,o3d.utility.DoubleVector([radius, radius * 2]))

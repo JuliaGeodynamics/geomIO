@@ -20,12 +20,12 @@ warnings.filterwarnings('ignore')
 ctx = geomio.context()
 
 #### 2) Add SVG to geomIO context
-ctx.addsvg("input/dome.svg")
+ctx.addsvg("input/volTest.svg")
 
 #### 3) Export STLs
-nInterPaths = 8     # Refine the grid in normal direction by adding N interpolated path instances
-nBezCtrlPts = 3     # Refine the grid along the Bezier paths by adding additional control points
-isVol       = False # Closed (volume) or or open STL mesh, i.e., do we have closed or open Bezier path instances
+nInterPaths = 15     # Refine the grid in normal direction by adding N interpolated path instances
+nBezCtrlPts = 11    # Refine the grid along the Bezier paths by adding additional control points
+isVol       = True # Closed (volume) or or open STL mesh, i.e., do we have closed or open Bezier path instances
 ctx.svg2stl(nInterPaths,nBezCtrlPts,isVol, "BIN")
 
 #### 4) Transfer STL layered structure to rectilinear grid
@@ -43,7 +43,7 @@ ctx.addgrd(nx,ny,nz,xBnds,yBnds,zBnds)
 #print(t2-t1)
 #    4b) [optional] Only use specific STL structures to assign the structure to the rectilinear grid
 t1 = t.time()
-ctx.stl2grd(["dome1","dome2","dome3"])
+#ctx.stl2grd(["dome1","dome2","dome3"])
 #ctx.stl2grd(["dome1","dome3"])
 t2 = t.time()
 print(t2-t1)

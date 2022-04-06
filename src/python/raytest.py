@@ -182,7 +182,7 @@ def rayTrc_rlgrd(inFile:str, grid):
     # nHit = np.zeros_like(X) # count the intersections on the x,y plane
     zHit = np.array([]) # Z -  coordinate of intersectionpoints
 
-    Phase = rayTrc_core(x,y,z, vertices,zHit,verbose=True)    
+    Phase = rayTrc_core(x,y,z, vertices,zHit,verbose=False)    
     #Phase = rayTrc_core(x,y,z, vertices)    # Alternative
    
     return Phase
