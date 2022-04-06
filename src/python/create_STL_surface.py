@@ -304,8 +304,24 @@ def triSurfClose(lc, numLayers, nInter, nPrec):
 
     return mesh1, triangles
 
+from pointcloud_delaunay import *
+import vtk
+def plotInteractive(svg:svgFileData, stlctx:stlMesh):
+    lc = getPointCoords(svg, stlctx.paths, stlctx.nInterPaths,stlctx.nBezCtrlPts)
 
 
+    if stlctx.isVol:
+        triangles, face = triSurfClose(lc,len(stlctx.paths), stlctx.nInterPaths,stlctx.nBezCtrlPts)
+    else:           
+        triangles, face = triSurfOpen(lc, len(stlctx.paths), stlctx.nInterPaths,stlctx.nBezCtrlPts)
+    import plotly.figure_factory as ff
+    fig = ff.create_trisurf(x=lc[:,0], y=lc[:,1], z=lc[:,2],
+                         colormap="Portland",
+                         simplices=face,
+                         title="Mesh")
+    fig.show('browser')
+    return
+    
 
 def writeSTL(fname, svg:svgFileData,stlctx:stlMesh, mode = "ASCII"):
     """
@@ -314,10 +330,12 @@ def writeSTL(fname, svg:svgFileData,stlctx:stlMesh, mode = "ASCII"):
     """
     lc = getPointCoords(svg, stlctx.paths, stlctx.nInterPaths,stlctx.nBezCtrlPts)
 
+
     if stlctx.isVol:
         triangles, face = triSurfClose(lc,len(stlctx.paths), stlctx.nInterPaths,stlctx.nBezCtrlPts)
     else:           
         triangles, face = triSurfOpen(lc, len(stlctx.paths), stlctx.nInterPaths,stlctx.nBezCtrlPts)
+  
 
     cube = mesh.Mesh(np.zeros(face.shape[0], dtype=mesh.Mesh.dtype))
     for i, f in enumerate(face):

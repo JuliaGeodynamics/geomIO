@@ -33,7 +33,7 @@ def delny3D(PointCloudArray):
     delny = vtk.vtkDelaunay3D()
     delny.SetInputData(PC_polydata)
     delny.SetOffset(4.0)
-    delny.SetAlpha(20)
+    delny.SetAlpha(1)
     delny.Update()
     
     delnyPolyData = delny.GetOutput()

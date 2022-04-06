@@ -7,7 +7,40 @@ Created on Thu Aug 19 16:55:51 2021
 """
 # archive
 
-    
+def line2coor(path, tol = 1e-6):    # Obsolete?
+    """
+    DEPRECATED
+
+    Parameters
+    ----------
+    path: path(s) from svgpathtools
+    tol : tolerance, depraceteed.
+
+    Returns
+    -------
+    coord : coordinates of lines
+
+    """
+    coord = []
+     # read coordinates
+    for i in range(len(path)) :
+        
+        # if not isinstance(path[i], Line) :
+            
+        #     sys.exit("All paths should consist of lines segments only")
+        
+        line =  path[i]
+        p    =  line[0]
+        pe   =  line[1]
+        x    =  int(real(p))
+        y    =  -int(imag(p))
+
+        coord.append([x, y])
+    end = path.end
+    x    =  int(real(end))
+    y    =  -int(imag(end))
+    coord.append([x, y])
+    return coord
 
 class Stl(object):
     dtype = np.dtype([

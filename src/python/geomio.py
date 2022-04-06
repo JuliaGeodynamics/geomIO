@@ -59,6 +59,15 @@ class context:
             fname           = self.outDir + '/' + objs[i] + '.stl'
             print(' -> Export: ',  fname)
             writeSTL(fname,self.svg, self.stl)
+            
+    def plot(self,nInterPaths: int, nBezCtrlPts: int,isVol:bool):
+        objs = list(set(self.svg.CurveNames))
+        for i in range(len(objs)):
+            self.stl = stlMesh([],nInterPaths,nBezCtrlPts,isVol, mode="ASCII")
+            paths = splitPaths(self.svg, objs[i])
+            for j in range(len(paths)):
+                self.stl.paths.append(paths[j])
+            plotInteractive(self.svg, self.stl)
     
     def addgrd(self,nx : int ,ny: int, nz: int, xBnds:tuple, yBnds:tuple, zBnds:tuple):
         print('Create rectilinear grid: ', str(nx)+'x'+str(ny)+'x'+str(nz)+','+str(xBnds)+'x'+str(yBnds)+'x'+str(zBnds))
@@ -161,40 +170,7 @@ def checkPath(attributes, Layers):  # Obsolete?
         #    print("dasads")
     return numPaths
 
-def line2coor(path, tol = 1e-6):    # Obsolete?
-    """
-    DEPRACATED
 
-    Parameters
-    ----------
-    path: path(s) from svgpathtools
-    tol : tolerance, depraceteed.
-
-    Returns
-    -------
-    coord : coordinates of lines
-
-    """
-    coord = []
-     # read coordinates
-    for i in range(len(path)) :
-        
-        # if not isinstance(path[i], Line) :
-            
-        #     sys.exit("All paths should consist of lines segments only")
-        
-        line =  path[i]
-        p    =  line[0]
-        pe   =  line[1]
-        x    =  int(real(p))
-        y    =  -int(imag(p))
-
-        coord.append([x, y])
-    end = path.end
-    x    =  int(real(end))
-    y    =  -int(imag(end))
-    coord.append([x, y])
-    return coord
     
 
 
@@ -250,7 +226,6 @@ def getBounds(inFile, numInter, nPrec):
     print("z boundaries are:"+ str(zBound))
     print("---------------------------")
     return
-
 
 
 
