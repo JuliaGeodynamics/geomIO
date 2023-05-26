@@ -58,7 +58,7 @@ class context:
                 self.stl.paths.append(paths[j])
             fname           = self.outDir + '/' + objs[i] + '.stl'
             print(' -> Export: ',  fname)
-            writeSTL(fname,self.svg, self.stl)
+            writeSTL(fname,self.svg, self.stl, mode = mode)
             
     def plot(self,nInterPaths: int, nBezCtrlPts: int,isVol:bool):
         objs = list(set(self.svg.CurveNames))
